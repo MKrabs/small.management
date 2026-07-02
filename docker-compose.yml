@@ -12,24 +12,26 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/mkrabs/small.management-backend:${TAG:-latest}
-    build: ./backend
+    image: ghcr.io/mkrabs/small.management-backend:latest
     env_file: .env
     depends_on:
       - db
     networks:
       - internal
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   web:
-    image: ghcr.io/mkrabs/small.management-frontend:${TAG:-latest}
-    build: ./frontend
+    image: ghcr.io/mkrabs/small.management-frontend:latest
     depends_on:
       - backend
     networks:
       - internal
       - nginx_default
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
 networks:
   internal:
