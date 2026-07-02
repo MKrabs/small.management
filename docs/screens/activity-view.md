@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: The main hub members land on after joining and return to for everything.
+---
+
 # Screen: Activity View
 
 The main hub. Members land here after joining and return here for everything.

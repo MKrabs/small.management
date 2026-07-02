@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: First screen a new member sees when hitting an activity URL — minimum-friction entry.
+---
+
 # Screen: Join / Landing
 
 First screen a new member sees when hitting an activity URL. Goal: get them in with minimum friction.

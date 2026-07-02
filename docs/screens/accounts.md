@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: Optional accounts — persistent identity across devices and a personal activity list.
+---
+
 # Screen: Account Screens
 
 Accounts are optional. Anonymous participation is always available. Accounts unlock persistent identity across devices and a personal activity list.
