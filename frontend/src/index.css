@@ -129,40 +129,21 @@
     }
 }
 
+.marker-highlight {
+  background: linear-gradient(
+    105deg,
+    transparent 6px,
+    #FCD34D 6px,
+    #FCD34D calc(100% - 6px),
+    transparent calc(100% - 6px)
+  );
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0.1em 0.6em;
+}
+
 @keyframes chat-float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-10px); }
 }
 
-/* Each bubble owns the full 10 s cycle. Entry timing baked into % so they loop in sync. */
-/* visible window: ~30 % – 88 %; quick fade-out 88 – 96 %; hidden 96 – 100 % then repeat  */
-@keyframes bubble-1 {
-  0%, 2%   { opacity: 0; transform: translateY(14px) scale(0.96); }
-  8%       { opacity: 1; transform: translateY(0)    scale(1);    }
-  88%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  96%, 100%{ opacity: 0; transform: translateY(14px) scale(0.96); }
-}
-@keyframes bubble-2 {
-  0%, 12%  { opacity: 0; transform: translateY(14px) scale(0.96); }
-  18%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  88%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  96%, 100%{ opacity: 0; transform: translateY(14px) scale(0.96); }
-}
-@keyframes bubble-3 {
-  0%, 22%  { opacity: 0; transform: translateY(14px) scale(0.96); }
-  28%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  88%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  96%, 100%{ opacity: 0; transform: translateY(14px) scale(0.96); }
-}
-@keyframes bubble-4 {
-  0%, 32%  { opacity: 0; transform: translateY(14px) scale(0.96); }
-  38%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  88%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  96%, 100%{ opacity: 0; transform: translateY(14px) scale(0.96); }
-}
-@keyframes bubble-5 {
-  0%, 42%  { opacity: 0; transform: translateY(14px) scale(0.96); }
-  48%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  88%      { opacity: 1; transform: translateY(0)    scale(1);    }
-  96%, 100%{ opacity: 0; transform: translateY(14px) scale(0.96); }
-}

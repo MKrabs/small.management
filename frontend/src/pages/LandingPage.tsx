@@ -97,7 +97,7 @@ function MarketingHome() {
       {/* Hero */}
       <section className="flex flex-col md:grid md:grid-cols-2 md:gap-10 md:items-center py-16 min-h-[78svh]">
         {/* Mobile-only title — appears first */}
-        <h1 className="md:hidden text-4xl font-semibold tracking-tight leading-tight mb-4">
+        <h1 className="md:hidden font-semibold tracking-tight leading-tight whitespace-nowrap mb-4 text-[clamp(1.4rem,7vw,2.25rem)]">
           small.management
         </h1>
 
@@ -174,28 +174,7 @@ function MarketingHome() {
 // ─── Squiggle highlight ───────────────────────────────────────────────────────
 
 function Squiggle({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="relative inline pb-1">
-      {children}
-      {/* hand-drawn wavy underline; vectorEffect keeps stroke width constant as SVG scales */}
-      <svg
-        aria-hidden
-        className="absolute bottom-0 left-0 w-full overflow-visible pointer-events-none"
-        height="7"
-        viewBox="0 0 100 7"
-        preserveAspectRatio="none"
-      >
-        <path
-          d="M0,5 Q8,2 16,5 Q24,8 32,5 Q40,2 48,5 Q56,8 64,5 Q72,2 80,5 Q88,8 96,5 Q98,4 100,5"
-          fill="none"
-          stroke="#FCD34D"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-    </span>
-  );
+  return <span className="marker-highlight">{children}</span>;
 }
 
 // ─── Demo components (local state, no API) ────────────────────────────────────
