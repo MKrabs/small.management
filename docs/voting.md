@@ -1,3 +1,8 @@
+---
+type: Product Doc
+description: Poll and proposal voting model, heatmap rules, and finalizing.
+---
+
 # Voting
 
 ## Poll Voting Model

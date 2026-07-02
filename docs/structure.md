@@ -1,3 +1,8 @@
+---
+type: Product Doc
+description: Entity hierarchy (Activity → Poll/Proposal/Event) and the planning loop.
+---
+
 # Product Structure
 
 ## Hierarchy

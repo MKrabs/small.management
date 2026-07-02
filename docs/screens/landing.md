@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: The public-facing entry point at the root URL.
+---
+
 # Screen: Landing Page
 
 The public-facing entry point at the root URL. Minimal. The product explains itself once you're inside an activity.

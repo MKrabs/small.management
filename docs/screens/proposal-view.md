@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: A specific date+time put forward by a member for others to vote on and finalize.
+---
+
 # Screen: Proposal View
 
 A specific date+time put forward by a member. Others vote on it. Any member can finalize it into an Event.

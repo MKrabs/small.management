@@ -1,3 +1,8 @@
+---
+type: Product Doc
+description: The no-admin model, soft delete, and the activity log.
+---
+
 # Governance
 
 ## No Admin

@@ -1,3 +1,8 @@
+---
+type: Product Doc
+description: What small.management is, its positioning, licensing, and core product principles.
+---
+
 # Overview
 
 ## Core Idea

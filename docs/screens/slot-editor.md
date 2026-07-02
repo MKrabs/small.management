@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: The mobile-first component for sharing or editing availability, opened from the Poll view.
+---
+
 # Screen: Slot Editor
 
 The mobile-first component. Opened from the Poll view when a member wants to share or edit their availability.

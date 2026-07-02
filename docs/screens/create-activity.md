@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: Dedicated /new page to get an activity created as fast as possible.
+---
+
 # Screen: Create Activity
 
 Dedicated page at `/new`. Get an activity created as fast as possible. The poll comes after, not here.

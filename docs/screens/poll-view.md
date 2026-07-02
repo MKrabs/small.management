@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: Where a member shares their own availability and sees the group's collective picture.
+---
+
 # Screen: Poll View
 
 Where a member shares their own availability and sees the group's collective picture.

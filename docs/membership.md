@@ -1,3 +1,8 @@
+---
+type: Product Doc
+description: How members join, anonymous vs. logged-in identity, and PIN protection.
+---
+
 # Membership
 
 ## Joining an Activity

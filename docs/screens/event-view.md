@@ -1,3 +1,8 @@
+---
+type: Screen Spec
+description: The fixed outcome — RSVP, share the date, close the loop.
+---
+
 # Screen: Event View
 
 The fixed outcome. RSVP, share the date, close the loop.

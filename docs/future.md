@@ -1,3 +1,8 @@
+---
+type: Product Doc
+description: Features explicitly deferred past v1, so they don't get forgotten.
+---
+
 # Deferred Features
 
 Features explicitly out of scope for v1, noted here so they don't get forgotten.
