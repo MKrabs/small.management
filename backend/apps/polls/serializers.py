@@ -13,11 +13,24 @@ class SlotSerializer(serializers.ModelSerializer):
 
 class PollSerializer(serializers.ModelSerializer):
     created_by = MemberSerializer(read_only=True)
-    specific_slot_count = serializers.SerializerMethodField()
+    voter_count = serializers.SerializerMethodField()
+    my_vote = serializers.SerializerMethodField()
 
-    def get_specific_slot_count(self, obj):
-        return obj.slots.filter(deleted_at__isnull=True, date__isnull=False).count()
+    def get_voter_count(self, obj):
+        return obj.slots.filter(deleted_at__isnull=True).values("member_id").distinct().count()
+
+    # summary of the requesting member's own slots (needs "member" in context, e.g. the feed)
+    def get_my_vote(self, obj):
+        member = self.context.get("member")
+        if not member:
+            return None
+        slots = obj.slots.filter(deleted_at__isnull=True, member=member)
+        return {
+            "voted": slots.exists(),
+            "has_date": slots.filter(date__isnull=False).exists(),
+            "has_time": slots.filter(time_start__isnull=False).exists(),
+        }
 
     class Meta:
         model = Poll
-        fields = ["id", "cycle_id", "title", "created_by", "specific_slot_count", "created_at", "deleted_at"]
+        fields = ["id", "cycle_id", "title", "created_by", "voter_count", "my_vote", "created_at", "deleted_at"]

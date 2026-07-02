@@ -19,6 +19,7 @@ export type Activity = {
   has_pin: boolean;
   member_count: number;
   is_member: boolean;
+  me: Member | null;
   created_at: string;
 };
 
@@ -55,7 +56,9 @@ export type Poll = {
   cycle_id: number | null;
   title: string;
   created_by: Member | null;
-  specific_slot_count: number;
+  voter_count: number;
+  /** Requesting member's own participation — only present in the feed. */
+  my_vote: { voted: boolean; has_date: boolean; has_time: boolean } | null;
   created_at: string;
   deleted_at: string | null;
 };
