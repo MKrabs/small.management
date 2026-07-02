@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN python manage.py collectstatic --noinput
+# collectstatic needs SECRET_KEY set; use a dummy at build time
+RUN SECRET_KEY=build-only DATABASE_URL=sqlite:///tmp/build.db python manage.py collectstatic --noinput
 
-EXPOSE 8000
-
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "60"]
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

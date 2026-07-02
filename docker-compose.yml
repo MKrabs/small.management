@@ -12,6 +12,7 @@ services:
     restart: unless-stopped
 
   backend:
+    image: ghcr.io/mkrabs/small.management-backend:${TAG:-latest}
     build: ./backend
     env_file: .env
     depends_on:
@@ -21,6 +22,7 @@ services:
     restart: unless-stopped
 
   web:
+    image: ghcr.io/mkrabs/small.management-frontend:${TAG:-latest}
     build: ./frontend
     depends_on:
       - backend
