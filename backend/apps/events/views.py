@@ -1,0 +1,32 @@
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+from apps.mixins import ActivityMixin
+from apps.activities.models import Log
+from .models import Event, RSVP
+from .serializers import EventSerializer, RSVPSerializer
+
+
+class EventDetailView(ActivityMixin, APIView):
+    def get(self, request, activity_id, pk):
+        self.get_member()
+        event = get_object_or_404(Event, id=pk, activity=self.get_activity())
+        return Response(EventSerializer(event).data)
+
+
+class RSVPView(ActivityMixin, APIView):
+    """PUT to upsert own RSVP."""
+    def put(self, request, activity_id, event_id):
+        activity = self.get_activity()
+        member = self.get_member()
+        event = get_object_or_404(Event, id=event_id, activity=activity)
+        status_val = request.data.get("status")
+        if status_val not in ("going", "maybe", "not_going"):
+            return Response({"status": ["Must be going, maybe, or not_going"]}, status=400)
+        rsvp, created = RSVP.objects.update_or_create(
+            event=event, member=member,
+            defaults={"status": status_val, "comment": request.data.get("comment", "")},
+        )
+        Log.record(activity, member, "rsvp", event_id=event_id, status=status_val)
+        return Response(RSVPSerializer(rsvp).data, status=201 if created else 200)
