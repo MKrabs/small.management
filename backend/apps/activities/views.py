@@ -105,7 +105,7 @@ class FeedView(ActivityMixin, APIView):
         from apps.events.serializers import EventSerializer
 
         activity = self.get_activity()
-        self.get_member()
+        member = self.get_member()
 
         include_logs = request.query_params.get("include_logs") == "true"
         items = []
@@ -114,7 +114,7 @@ class FeedView(ActivityMixin, APIView):
             items.append({"type": "cycle", "created_at": obj.created_at, "data": CycleSerializer(obj).data})
 
         for obj in activity.polls.select_related("created_by").all():
-            items.append({"type": "poll", "created_at": obj.created_at, "data": PollSerializer(obj).data})
+            items.append({"type": "poll", "created_at": obj.created_at, "data": PollSerializer(obj, context={"member": member}).data})
 
         for obj in activity.proposals.select_related("created_by").prefetch_related("votes__member").all():
             items.append({"type": "proposal", "created_at": obj.created_at, "data": ProposalSerializer(obj).data})
@@ -122,7 +122,8 @@ class FeedView(ActivityMixin, APIView):
         for obj in activity.events.select_related("created_by").prefetch_related("rsvps__member").all():
             items.append({"type": "event", "created_at": obj.created_at, "data": EventSerializer(obj).data})
 
-        for obj in activity.comments.filter(parent=None).select_related("member").all():
+        # standalone comments only — card-attached ones live on their card's page
+        for obj in activity.comments.filter(parent=None, poll=None, proposal=None, event=None).select_related("member").all():
             items.append({"type": "comment", "created_at": obj.created_at, "data": CommentSerializer(obj).data})
 
         if include_logs:
@@ -177,6 +178,10 @@ class CycleDetailView(ActivityMixin, APIView):
 class CommentListCreateView(ActivityMixin, APIView):
     def get(self, request, activity_id):
         self.get_member()
+        parent_id = request.query_params.get("parent")
+        if parent_id:
+            qs = self.get_activity().comments.filter(parent_id=parent_id).select_related("member")
+            return Response(CommentSerializer(qs, many=True).data)
         qs = self.get_activity().comments.filter(parent=None).select_related("member")
         poll_id = request.query_params.get("poll")
         proposal_id = request.query_params.get("proposal")
