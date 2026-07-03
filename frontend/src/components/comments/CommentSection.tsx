@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Comment } from "@/api/types";
+import ConfirmDelete from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { timeAgo } from "@/lib/utils";
@@ -60,8 +61,6 @@ function CommentItem({ comment, activityId }: { comment: Comment; activityId: st
     mutationFn: (commentId: number) => api.del(`/activities/${activityId}/comments/${commentId}/`, activityId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", activityId] }),
   });
-  const confirmDelete = (commentId: number) =>
-    window.confirm("Delete this comment for everyone?") && deleteMut.mutate(commentId);
 
   const repliesQ = useQuery({
     queryKey: ["comments", activityId, `parent=${comment.id}`],
@@ -91,9 +90,12 @@ function CommentItem({ comment, activityId }: { comment: Comment; activityId: st
             <button className="hover:text-foreground" onClick={() => setReplying((v) => !v)}>
               Reply
             </button>
-            <button className="hover:text-destructive" onClick={() => confirmDelete(comment.id)}>
-              Delete
-            </button>
+            <ConfirmDelete
+              title="Delete this comment?"
+              description="It's deleted for everyone."
+              onConfirm={() => deleteMut.mutate(comment.id)}
+              trigger={<button className="hover:text-destructive">Delete</button>}
+            />
           </>
         )}
       </div>

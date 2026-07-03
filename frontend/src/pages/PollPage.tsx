@@ -8,6 +8,7 @@ import type { Poll, Proposal, Slot } from "@/api/types";
 import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
+import ConfirmDelete from "@/components/ConfirmDelete";
 import CreateProposalSheet from "@/components/sheets/CreateProposalSheet";
 import SlotEditor from "@/components/poll/SlotEditor";
 import Heatmap from "@/components/poll/Heatmap";
@@ -62,15 +63,21 @@ export default function PollPage() {
                 Poll{pollQ.data.deleted_at && " · deleted"}
               </span>
               {!pollQ.data.deleted_at && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground"
-                  aria-label="Delete poll"
-                  onClick={() => window.confirm("Delete this poll for everyone? It stays visible, struck through.") && deleteMut.mutate()}
-                >
-                  <Trash2 />
-                </Button>
+                <ConfirmDelete
+                  title="Delete this poll?"
+                  description="It's deleted for everyone but stays visible, struck through."
+                  onConfirm={() => deleteMut.mutate()}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-muted-foreground"
+                      aria-label="Delete poll"
+                    >
+                      <Trash2 />
+                    </Button>
+                  }
+                />
               )}
             </div>
             <h1 className={`text-2xl font-semibold ${pollQ.data.deleted_at ? "line-through opacity-40" : ""}`}>

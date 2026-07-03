@@ -8,6 +8,7 @@ import type { Event, Member, Proposal, ProposalVote } from "@/api/types";
 import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
+import ConfirmDelete from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldError } from "@/components/ui/field";
@@ -64,15 +65,21 @@ export default function ProposalPage() {
                 Proposal{deleted && " · deleted"}
               </span>
               {!deleted && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground"
-                  aria-label="Delete proposal"
-                  onClick={() => window.confirm("Delete this proposal for everyone? It stays visible, struck through.") && deleteMut.mutate()}
-                >
-                  <Trash2 />
-                </Button>
+                <ConfirmDelete
+                  title="Delete this proposal?"
+                  description="It's deleted for everyone but stays visible, struck through."
+                  onConfirm={() => deleteMut.mutate()}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-muted-foreground"
+                      aria-label="Delete proposal"
+                    >
+                      <Trash2 />
+                    </Button>
+                  }
+                />
               )}
             </div>
             <h1 className={`text-2xl font-semibold ${deleted ? "line-through opacity-40" : ""}`}>
