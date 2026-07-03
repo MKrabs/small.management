@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, MessageSquare, Plus, X } from "lucide-react"
 import { useApi } from "@/hooks/useApi";
 import type { Slot } from "@/api/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { STATUS_CHIP, type VoteStatus } from "@/lib/status";
 import { cn, formatTime, parseLocalDate } from "@/lib/utils";
 
@@ -335,18 +336,18 @@ function DayCard({
 
           {/* Time range — empty = all day */}
           <div className="flex items-center gap-2 text-sm">
-            <input
+            <Input
               type="time"
               step={1800}
-              className="border rounded-md px-2 py-1 text-sm bg-background"
+              className="h-8 w-auto"
               value={e.time_start}
               onChange={(ev) => onUpdate(e.key, { time_start: ev.target.value })}
             />
             <span className="text-muted-foreground">–</span>
-            <input
+            <Input
               type="time"
               step={1800}
-              className="border rounded-md px-2 py-1 text-sm bg-background"
+              className="h-8 w-auto"
               value={e.time_end}
               onChange={(ev) => onUpdate(e.key, { time_end: ev.target.value })}
             />
@@ -356,8 +357,8 @@ function DayCard({
           </div>
 
           {e.showNote && (
-            <input
-              className="border rounded-md px-2 py-1 text-sm bg-background"
+            <Input
+              className="h-8"
               placeholder="Note — e.g. “only after work”"
               value={e.note}
               onChange={(ev) => onUpdate(e.key, { note: ev.target.value })}

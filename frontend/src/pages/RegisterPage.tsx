@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import PageShell from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { User } from "@/api/types";
@@ -32,27 +34,31 @@ export default function RegisterPage() {
           Optional — you can also join activities anonymously.
         </p>
 
-        <div className="flex flex-col gap-3">
-          <input
-            className="border rounded-md px-3 py-2 text-sm bg-background"
-            placeholder="Display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            autoFocus
-          />
-          <input
-            type="password"
-            className="border rounded-md px-3 py-2 text-sm bg-background"
-            placeholder="Password (min 6 chars)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+        <FieldGroup className="gap-3">
+          <Field>
+            <FieldLabel htmlFor="register-name" className="sr-only">Display name</FieldLabel>
+            <Input
+              id="register-name"
+              placeholder="Display name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              autoFocus
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="register-password" className="sr-only">Password</FieldLabel>
+            <Input
+              id="register-password"
+              type="password"
+              placeholder="Password (min 6 chars)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </Field>
+        </FieldGroup>
 
         {mutation.error && (
-          <p className="text-sm text-destructive">
-            That name might already be taken. Try another.
-          </p>
+          <FieldError>That name might already be taken. Try another.</FieldError>
         )}
 
         <Button

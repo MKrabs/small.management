@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import type { Comment } from "@/api/types";
 
@@ -23,16 +25,16 @@ export default function CreateCommentSheet({ activityId, onClose, onCreated }: P
   });
 
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} title="New comment">
       <h2 className="font-semibold text-lg">New comment</h2>
-      <textarea
-        className="border rounded-md px-3 py-2 text-sm bg-background w-full min-h-24 resize-none"
+      <Textarea
+        className="min-h-24 resize-none"
         placeholder="Say something to the group…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         autoFocus
       />
-      {mutation.isError && <p className="text-sm text-destructive">Something went wrong.</p>}
+      {mutation.isError && <FieldError>Something went wrong.</FieldError>}
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button onClick={() => mutation.mutate()} disabled={!body.trim() || mutation.isPending}>

@@ -1,13 +1,16 @@
 import type { ReactNode } from "react";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 
-/** Modal bottom sheet: dimmed backdrop, panel pinned to the bottom edge. */
-export default function BottomSheet({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+type Props = { onClose: () => void; title: string; children: ReactNode };
+
+/** Modal bottom sheet backed by shadcn's Drawer (mobile-first bottom panel). */
+export default function BottomSheet({ onClose, title, children }: Props) {
   return (
-    <>
-      <div className="fixed inset-0 z-30 bg-black/40" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t rounded-t-2xl p-6 pb-8 flex flex-col gap-4 max-w-2xl mx-auto">
-        {children}
-      </div>
-    </>
+    <Drawer open onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="mx-auto w-full max-w-2xl">
+        <DrawerTitle className="sr-only">{title}</DrawerTitle>
+        <div className="flex flex-col gap-4 p-6 pb-8">{children}</div>
+      </DrawerContent>
+    </Drawer>
   );
 }

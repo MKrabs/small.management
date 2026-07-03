@@ -10,6 +10,8 @@ import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
 import NewCycleSheet from "@/components/sheets/NewCycleSheet";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import { STATUS_CHIP } from "@/lib/status";
 import { cn, formatDay, formatTime, isEventPast, timeAgo } from "@/lib/utils";
@@ -225,7 +227,7 @@ function RsvpSheet({
   });
 
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} title="Your RSVP">
         <h2 className="font-semibold text-lg">Your RSVP</h2>
         <div className="flex gap-2">
           {(["going", "maybe", "not_going"] as const).map((s) => (
@@ -241,13 +243,8 @@ function RsvpSheet({
             </button>
           ))}
         </div>
-        <input
-          className="border rounded-md px-3 py-2 text-sm bg-background"
-          placeholder="Comment (optional)"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
-        {mutation.isError && <p className="text-sm text-destructive">Something went wrong.</p>}
+        <Input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
+        {mutation.isError && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={() => mutation.mutate()} disabled={!status || mutation.isPending}>

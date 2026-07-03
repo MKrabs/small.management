@@ -14,6 +14,8 @@ import CreatePollSheet from "@/components/sheets/CreatePollSheet";
 import CreateProposalSheet from "@/components/sheets/CreateProposalSheet";
 import CreateCommentSheet from "@/components/sheets/CreateCommentSheet";
 import NewCycleSheet from "@/components/sheets/NewCycleSheet";
+import { Input } from "@/components/ui/input";
+import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 
 type SheetKind = "menu" | "poll" | "proposal" | "comment" | "cycle" | null;
 
@@ -74,7 +76,7 @@ export default function ActivityPage() {
       </div>
 
       {sheet === "menu" && (
-        <BottomSheet onClose={() => setSheet(null)}>
+        <BottomSheet onClose={() => setSheet(null)} title="Add to activity">
           <div className="flex flex-col gap-1">
             <MenuAction
               icon={<BarChart3 className="size-5" />}
@@ -201,35 +203,36 @@ function JoinScreen({
         <p className="text-sm text-muted-foreground mt-1">{activity.member_count} member{activity.member_count !== 1 ? "s" : ""} already in</p>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <FieldGroup className="gap-3">
         {activity.has_pin && (
-          <input
-            className="border rounded-md px-3 py-2 text-sm bg-background"
-            placeholder="PIN"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-          />
+          <Field>
+            <FieldLabel htmlFor="join-pin" className="sr-only">PIN</FieldLabel>
+            <Input id="join-pin" placeholder="PIN" value={pin} onChange={(e) => setPin(e.target.value)} />
+          </Field>
         )}
         {!user && (
-          <input
-            className="border rounded-md px-3 py-2 text-sm bg-background"
-            placeholder="Your display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            autoFocus
-          />
+          <Field>
+            <FieldLabel htmlFor="join-name" className="sr-only">Your display name</FieldLabel>
+            <Input
+              id="join-name"
+              placeholder="Your display name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              autoFocus
+            />
+          </Field>
         )}
         {user && (
           <p className="text-sm text-muted-foreground">
             Joining as <strong>{user.display_name}</strong>
           </p>
         )}
-      </div>
+      </FieldGroup>
 
       {mutation.isError && (
-        <p className="text-sm text-destructive">
+        <FieldError>
           {activity.has_pin ? "Wrong PIN or something went wrong." : "Something went wrong."}
-        </p>
+        </FieldError>
       )}
 
       <Button

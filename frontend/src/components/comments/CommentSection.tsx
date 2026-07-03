@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Comment } from "@/api/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { timeAgo } from "@/lib/utils";
 
 type Target = { poll?: number; proposal?: number; event?: number };
@@ -159,8 +160,8 @@ function Composer({
 
   return (
     <div className="flex gap-2">
-      <input
-        className="border rounded-md px-3 py-2 text-sm bg-background flex-1"
+      <Input
+        className="flex-1"
         placeholder={parentId ? "Reply…" : "Add a comment…"}
         value={body}
         onChange={(e) => setBody(e.target.value)}
