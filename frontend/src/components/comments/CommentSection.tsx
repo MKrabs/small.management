@@ -5,6 +5,11 @@ import { useApi } from "@/hooks/useApi";
 import type { Comment } from "@/api/types";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { timeAgo } from "@/lib/utils";
 
@@ -26,28 +31,23 @@ export default function CommentSection({ activityId, target }: { activityId: str
   });
 
   return (
-    <section className="border-t pt-4">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ChevronRight className={`size-4 transition-transform ${open ? "rotate-90" : ""}`} />
+    // Controlled so the comments query only runs once opened.
+    <Collapsible open={open} onOpenChange={setOpen} render={<section className="border-t pt-4" />}>
+      <CollapsibleTrigger className="group flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
         Comments
-      </button>
-
-      {open && (
-        <div className="mt-3 flex flex-col gap-3">
-          {commentsQ.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
-          {commentsQ.data?.length === 0 && (
-            <p className="text-sm text-muted-foreground">No comments yet.</p>
-          )}
-          {commentsQ.data?.map((c) => (
-            <CommentItem key={c.id} comment={c} activityId={activityId} />
-          ))}
-          <Composer activityId={activityId} target={target} />
-        </div>
-      )}
-    </section>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-3 flex flex-col gap-3">
+        {commentsQ.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {commentsQ.data?.length === 0 && (
+          <p className="text-sm text-muted-foreground">No comments yet.</p>
+        )}
+        {commentsQ.data?.map((c) => (
+          <CommentItem key={c.id} comment={c} activityId={activityId} />
+        ))}
+        <Composer activityId={activityId} target={target} />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
