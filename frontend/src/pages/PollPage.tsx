@@ -9,6 +9,7 @@ import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
 import ConfirmDelete from "@/components/ConfirmDelete";
+import DetailHeader from "@/components/layout/DetailHeader";
 import CreateProposalSheet from "@/components/sheets/CreateProposalSheet";
 import SlotEditor from "@/components/poll/SlotEditor";
 import Heatmap from "@/components/poll/Heatmap";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { STATUS_ICON, STATUS_TEXT } from "@/lib/status";
-import { formatDay, formatTime, timeAgo } from "@/lib/utils";
+import { formatDay, formatTime } from "@/lib/utils";
 
 export default function PollPage() {
   const { pollId = "" } = useParams();
@@ -64,34 +65,33 @@ export default function PollPage() {
         <div className="flex flex-col gap-6">
           {/* Header */}
           <div>
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                Poll{pollQ.data.deleted_at && " · deleted"}
-              </span>
-              {!pollQ.data.deleted_at && (
-                <ConfirmDelete
-                  title="Delete this poll?"
-                  description="It's deleted for everyone but stays visible, struck through."
-                  onConfirm={() => deleteMut.mutate()}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="text-muted-foreground"
-                      aria-label="Delete poll"
-                    >
-                      <Trash2 />
-                    </Button>
-                  }
-                />
-              )}
-            </div>
+            <DetailHeader
+              label={pollQ.data.deleted_at ? "Poll · deleted" : "Poll"}
+              createdBy={pollQ.data.created_by?.display_name}
+              createdAt={pollQ.data.created_at}
+              action={
+                !pollQ.data.deleted_at && (
+                  <ConfirmDelete
+                    title="Delete this poll?"
+                    description="It's deleted for everyone but stays visible, struck through."
+                    onConfirm={() => deleteMut.mutate()}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground"
+                        aria-label="Delete poll"
+                      >
+                        <Trash2 />
+                      </Button>
+                    }
+                  />
+                )
+              }
+            />
             <h1 className={`text-2xl font-semibold ${pollQ.data.deleted_at ? "line-through opacity-40" : ""}`}>
               {pollQ.data.title}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              by {pollQ.data.created_by?.display_name ?? "someone"} · {timeAgo(pollQ.data.created_at)}
-            </p>
             {activity && (
               <p className="text-sm text-muted-foreground mt-2">
                 {respondedCount} of {activity.member_count} member{activity.member_count !== 1 ? "s" : ""} have

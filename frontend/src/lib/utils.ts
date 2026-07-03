@@ -27,6 +27,24 @@ export function isEventPast(eventDate: string): boolean {
   return dayAfter < new Date()
 }
 
+// Day-granular relative label: "today", "yesterday", "3 days ago", "2 weeks ago"…
+export function relativeDay(iso: string): string {
+  const then = new Date(iso)
+  then.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const days = Math.round((today.getTime() - then.getTime()) / 86_400_000)
+  if (days <= 0) return "today"
+  if (days === 1) return "yesterday"
+  if (days < 7) return `${days} days ago`
+  if (days < 30) {
+    const weeks = Math.round(days / 7)
+    return `${weeks} week${weeks === 1 ? "" : "s"} ago`
+  }
+  const months = Math.round(days / 30)
+  return `${months} month${months === 1 ? "" : "s"} ago`
+}
+
 export function timeAgo(iso: string): string {
   const secs = (Date.now() - new Date(iso).getTime()) / 1000
   if (secs < 60) return "just now"

@@ -9,6 +9,7 @@ import type { Event, Member, RSVP } from "@/api/types";
 import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
+import DetailHeader from "@/components/layout/DetailHeader";
 import NewCycleSheet from "@/components/sheets/NewCycleSheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import BottomSheet from "@/components/layout/BottomSheet";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
-import { cn, formatDay, formatTime, isEventPast, timeAgo } from "@/lib/utils";
+import { cn, formatDay, formatTime, isEventPast } from "@/lib/utils";
 
 type RsvpStatus = RSVP["status"];
 
@@ -70,7 +71,11 @@ export default function EventPage() {
         <div className={`flex flex-col gap-6 ${past ? "opacity-80" : ""}`}>
           {/* Header */}
           <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">Event</span>
+            <DetailHeader
+              label="Event"
+              createdBy={event.created_by?.display_name}
+              createdAt={event.created_at}
+            />
             <h1 className="text-3xl font-semibold">
               {formatDay(event.date, { weekday: "long", month: "long", day: "numeric" })}
             </h1>
@@ -80,9 +85,6 @@ export default function EventPage() {
                 {event.time_end && `–${formatTime(event.time_end)}`}
               </p>
             )}
-            <p className="text-sm text-muted-foreground mt-1">
-              finalized by {event.created_by?.display_name ?? "someone"} · {timeAgo(event.created_at)}
-            </p>
             {event.note && <p className="text-sm mt-2">{event.note}</p>}
             {past && (
               <p className="text-sm text-muted-foreground border rounded-md px-3 py-1.5 mt-3 inline-block">

@@ -10,13 +10,14 @@ import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
 import ConfirmDelete from "@/components/ConfirmDelete";
+import DetailHeader from "@/components/layout/DetailHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BottomSheet from "@/components/layout/BottomSheet";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
-import { cn, formatDay, formatTime, timeAgo } from "@/lib/utils";
+import { cn, formatDay, formatTime } from "@/lib/utils";
 
 export default function ProposalPage() {
   const { proposalId = "" } = useParams();
@@ -60,37 +61,36 @@ export default function ProposalPage() {
         <div className="flex flex-col gap-6">
           {/* Header */}
           <div>
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                Proposal{deleted && " · deleted"}
-              </span>
-              {!deleted && (
-                <ConfirmDelete
-                  title="Delete this proposal?"
-                  description="It's deleted for everyone but stays visible, struck through."
-                  onConfirm={() => deleteMut.mutate()}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="text-muted-foreground"
-                      aria-label="Delete proposal"
-                    >
-                      <Trash2 />
-                    </Button>
-                  }
-                />
-              )}
-            </div>
+            <DetailHeader
+              label={deleted ? "Proposal · deleted" : "Proposal"}
+              createdBy={proposal.created_by?.display_name}
+              createdAt={proposal.created_at}
+              action={
+                !deleted && (
+                  <ConfirmDelete
+                    title="Delete this proposal?"
+                    description="It's deleted for everyone but stays visible, struck through."
+                    onConfirm={() => deleteMut.mutate()}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground"
+                        aria-label="Delete proposal"
+                      >
+                        <Trash2 />
+                      </Button>
+                    }
+                  />
+                )
+              }
+            />
             <h1 className={`text-2xl font-semibold ${deleted ? "line-through opacity-40" : ""}`}>
               {formatDay(proposal.proposed_date, { weekday: "long", month: "long", day: "numeric" })}
               {proposal.proposed_time && (
                 <span className="text-muted-foreground"> · {formatTime(proposal.proposed_time)}</span>
               )}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              proposed by {proposal.created_by?.display_name ?? "someone"} · {timeAgo(proposal.created_at)}
-            </p>
             {proposal.note && <p className="text-sm mt-2">{proposal.note}</p>}
           </div>
 
