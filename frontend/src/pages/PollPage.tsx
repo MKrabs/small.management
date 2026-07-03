@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Poll, Proposal, Slot } from "@/api/types";
@@ -11,8 +11,8 @@ import CommentSection from "@/components/comments/CommentSection";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import DetailHeader from "@/components/layout/DetailHeader";
 import CreateProposalSheet from "@/components/sheets/CreateProposalSheet";
-import SlotEditor from "@/components/poll/SlotEditor";
-import Heatmap from "@/components/poll/Heatmap";
+import PollCalendar from "@/components/poll/PollCalendar";
+import DaySheet from "@/components/poll/DaySheet";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -29,7 +29,7 @@ export default function PollPage() {
   const api = useApi();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [editorOpen, setEditorOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [proposalOpen, setProposalOpen] = useState(false);
 
   const deleteMut = useMutation({
@@ -51,10 +51,6 @@ export default function PollPage() {
 
   const slots = useMemo(() => slotsQ.data ?? [], [slotsQ.data]);
   const myId = activity?.me?.id;
-  const mySlots = useMemo(
-    () => sortSlots(slots.filter((s) => s.member.id === myId)),
-    [slots, myId],
-  );
   const respondedCount = new Set(slots.map((s) => s.member.id)).size;
 
   return (
@@ -100,28 +96,13 @@ export default function PollPage() {
             )}
           </div>
 
-          <Heatmap slots={slots} />
-
-          {/* Your availability */}
+          {/* Everyone's votes, day by day — tap a day to add or edit yours */}
           <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium">Your availability</h2>
-            {mySlots.length === 0 && (
-              <p className="text-sm text-muted-foreground">You haven't shared anything yet.</p>
-            )}
-            {mySlots.length > 0 && (
-              <button
-                className="flex flex-col gap-1.5 text-left border rounded-lg p-3 hover:bg-muted/50 transition-colors"
-                onClick={() => setEditorOpen(true)}
-              >
-                {mySlots.map((s) => (
-                  <SlotRow key={s.id} slot={s} />
-                ))}
-              </button>
-            )}
-            <Button variant="outline" size="sm" className="self-start" onClick={() => setEditorOpen(true)}>
-              <Plus data-icon="inline-start" />
-              {mySlots.length > 0 ? "Edit availability" : "Share availability"}
-            </Button>
+            <PollCalendar slots={slots} myId={myId} onSelectDay={setSelectedDay} />
+            <p className="text-xs text-muted-foreground">
+              Tap a day to add or edit your availability. The number shows how many people
+              voted; the color is your own answer.
+            </p>
           </section>
 
           {/* Per-member breakdown */}
@@ -137,12 +118,14 @@ export default function PollPage() {
         </Button>
       </StickyBar>
 
-      {editorOpen && (
-        <SlotEditor
+      {selectedDay && (
+        <DaySheet
           activityId={id}
           pollId={pollId}
-          mySlots={mySlots}
-          onClose={() => setEditorOpen(false)}
+          date={selectedDay}
+          slots={slots}
+          myId={myId}
+          onClose={() => setSelectedDay(null)}
         />
       )}
       {proposalOpen && (
