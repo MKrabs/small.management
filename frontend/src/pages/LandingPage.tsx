@@ -6,6 +6,9 @@ import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, User } from "@/api/types";
 import { buttonVariants } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
+import { cn } from "@/lib/utils";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -179,14 +182,7 @@ function Squiggle({ children }: { children: React.ReactNode }) {
 
 // ─── Demo components (local state, no API) ────────────────────────────────────
 
-type Vote = "yes" | "maybe" | "no";
-
-const VOTE_STYLES: Record<Vote, string> = {
-  yes: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400",
-  maybe:
-    "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400",
-  no: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400",
-};
+type Vote = VoteStatus;
 
 function VoteBar({
   yes,
@@ -226,9 +222,6 @@ function DemoPoll() {
   ] as const;
   const [votes, setVotes] = useState<Record<number, Vote | null>>({});
 
-  const toggle = (id: number, v: Vote) =>
-    setVotes((p) => ({ ...p, [id]: p[id] === v ? null : v }));
-
   return (
     <div className="border rounded-lg p-4 flex flex-col gap-3">
       <div>
@@ -250,25 +243,30 @@ function DemoPoll() {
             <div key={slot.id}>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm">{slot.label}</span>
-                <div className="flex gap-1 shrink-0">
+                <ToggleGroup
+                  value={my ? [my] : []}
+                  onValueChange={(v) =>
+                    setVotes((p) => ({ ...p, [slot.id]: (v[0] as Vote) ?? null }))
+                  }
+                  variant="outline"
+                  size="sm"
+                  spacing={1}
+                  className="shrink-0"
+                >
                   {(["yes", "maybe", "no"] as const).map((v) => (
-                    <button
+                    <ToggleGroupItem
                       key={v}
-                      onClick={() => toggle(slot.id, v)}
-                      className={`text-xs px-2 py-0.5 rounded border transition-colors ${
-                        my === v
-                          ? VOTE_STYLES[v]
-                          : "border-border hover:bg-muted"
-                      }`}
+                      value={v}
+                      className={cn("text-xs", STATUS_TOGGLE[v])}
                     >
                       {v === "yes"
                         ? `✓ ${yes}`
                         : v === "maybe"
                           ? `~ ${maybe}`
                           : `✗ ${no}`}
-                    </button>
+                    </ToggleGroupItem>
                   ))}
-                </div>
+                </ToggleGroup>
               </div>
               <VoteBar
                 yes={yes}
@@ -310,19 +308,18 @@ function DemoProposal() {
         </div>
       </div>
       <VoteBar yes={yes} maybe={maybe} no={no} total={yes + maybe + no} />
-      <div className="flex gap-2 flex-wrap">
+      <ToggleGroup
+        value={myVote ? [myVote] : []}
+        onValueChange={(v) => setMyVote((v[0] as Vote) ?? null)}
+        variant="outline"
+        className="flex-wrap"
+      >
         {(["yes", "maybe", "no"] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setMyVote(myVote === v ? null : v)}
-            className={`text-sm px-3 py-1 rounded-md border transition-colors ${
-              myVote === v ? VOTE_STYLES[v] : "border-border hover:bg-muted"
-            }`}
-          >
+          <ToggleGroupItem key={v} value={v} className={cn("font-normal", STATUS_TOGGLE[v])}>
             {v === "yes" ? "I'm in" : v === "maybe" ? "Maybe" : "Can't make it"}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
     </div>
   );
 }
@@ -351,29 +348,29 @@ function DemoEvent() {
         <span className="text-yellow-600">{maybe} maybe</span>
         <span className="text-muted-foreground">{not_going} not going</span>
       </div>
-      <div className="flex gap-2 flex-wrap">
+      <ToggleGroup
+        value={rsvp ? [rsvp] : []}
+        onValueChange={(v) => setRsvp((v[0] as RSVP) ?? null)}
+        variant="outline"
+        className="flex-wrap"
+      >
         {(["going", "maybe", "not_going"] as const).map((v) => (
-          <button
+          <ToggleGroupItem
             key={v}
-            onClick={() => setRsvp(rsvp === v ? null : v)}
-            className={`text-sm px-3 py-1 rounded-md border transition-colors ${
-              rsvp === v
-                ? v === "going"
-                  ? VOTE_STYLES.yes
-                  : v === "maybe"
-                    ? VOTE_STYLES.maybe
-                    : VOTE_STYLES.no
-                : "border-border hover:bg-muted"
-            }`}
+            value={v}
+            className={cn(
+              "font-normal",
+              STATUS_TOGGLE[v === "going" ? "yes" : v === "maybe" ? "maybe" : "no"],
+            )}
           >
             {v === "going"
               ? "Going"
               : v === "maybe"
                 ? "Maybe"
                 : "Can't make it"}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
     </div>
   );
 }

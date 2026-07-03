@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
-import { STATUS_CHIP } from "@/lib/status";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { STATUS_CHIP, STATUS_TOGGLE } from "@/lib/status";
 import { cn, formatDay, formatTime, isEventPast, timeAgo } from "@/lib/utils";
 
 type RsvpStatus = RSVP["status"];
@@ -27,6 +28,11 @@ const RSVP_CHIP: Record<RsvpStatus, string> = {
   going: STATUS_CHIP.yes,
   maybe: STATUS_CHIP.maybe,
   not_going: STATUS_CHIP.no,
+};
+const RSVP_TOGGLE: Record<RsvpStatus, string> = {
+  going: STATUS_TOGGLE.yes,
+  maybe: STATUS_TOGGLE.maybe,
+  not_going: STATUS_TOGGLE.no,
 };
 
 export default function EventPage() {
@@ -84,21 +90,23 @@ export default function EventPage() {
           </div>
 
           {/* RSVP tally — tap to filter */}
-          <div className="flex gap-2">
+          <ToggleGroup
+            value={filter ? [filter] : []}
+            onValueChange={(v) => setFilter((v[0] as RsvpStatus) ?? null)}
+            variant="outline"
+            className="w-full"
+          >
             {(["going", "maybe", "not_going"] as const).map((s) => (
-              <button
+              <ToggleGroupItem
                 key={s}
-                onClick={() => setFilter(filter === s ? null : s)}
-                className={cn(
-                  "border rounded-lg px-4 py-2 text-sm flex-1 text-center transition-colors",
-                  filter === s ? RSVP_CHIP[s] : "hover:bg-muted",
-                )}
+                value={s}
+                className={cn("flex-1 h-auto flex-col gap-0 py-2", RSVP_TOGGLE[s])}
               >
-                <span className="text-lg font-semibold block">{tally(s)}</span>
-                {RSVP_LABEL[s]}
-              </button>
+                <span className="text-lg font-semibold">{tally(s)}</span>
+                <span className="text-sm font-normal">{RSVP_LABEL[s]}</span>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
 
           {/* Member RSVPs */}
           <section className="flex flex-col gap-2">
@@ -229,20 +237,22 @@ function RsvpSheet({
   return (
     <BottomSheet onClose={onClose} title="Your RSVP">
         <h2 className="font-semibold text-lg">Your RSVP</h2>
-        <div className="flex gap-2">
+        <ToggleGroup
+          value={status ? [status] : []}
+          onValueChange={(v) => setStatus((v[0] as RsvpStatus) ?? null)}
+          variant="outline"
+          className="w-full"
+        >
           {(["going", "maybe", "not_going"] as const).map((s) => (
-            <button
+            <ToggleGroupItem
               key={s}
-              onClick={() => setStatus(s)}
-              className={cn(
-                "border rounded-lg px-4 py-2 text-sm flex-1 transition-colors",
-                status === s ? RSVP_CHIP[s] : "hover:bg-muted",
-              )}
+              value={s}
+              className={cn("flex-1 h-auto py-2 font-normal", RSVP_TOGGLE[s])}
             >
               {RSVP_LABEL[s]}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
         <Input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
         {mutation.isError && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-end">

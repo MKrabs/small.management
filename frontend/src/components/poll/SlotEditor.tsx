@@ -5,7 +5,8 @@ import { useApi } from "@/hooks/useApi";
 import type { Slot } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { STATUS_CHIP, type VoteStatus } from "@/lib/status";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
 import { cn, formatTime, parseLocalDate } from "@/lib/utils";
 
 type Entry = {
@@ -298,20 +299,23 @@ function DayCard({
         <div key={e.key} className="flex flex-col gap-2 border-l-2 pl-3">
           <div className="flex items-center justify-between gap-2">
             {/* Status pills */}
-            <div className="flex gap-1">
+            <ToggleGroup
+              value={[e.status]}
+              onValueChange={(v) => v.length && onUpdate(e.key, { status: v[0] as VoteStatus })}
+              variant="outline"
+              size="sm"
+              spacing={1}
+            >
               {(["yes", "maybe", "no"] as const).map((s) => (
-                <button
+                <ToggleGroupItem
                   key={s}
-                  onClick={() => onUpdate(e.key, { status: s })}
-                  className={cn(
-                    "text-xs px-2.5 py-1 rounded-full border transition-colors capitalize",
-                    e.status === s ? STATUS_CHIP[s] : "border-border text-muted-foreground hover:bg-muted",
-                  )}
+                  value={s}
+                  className={cn("rounded-full capitalize text-muted-foreground", STATUS_TOGGLE[s])}
                 >
                   {s}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
+            </ToggleGroup>
             <div className="flex gap-0.5">
               <Button
                 variant="ghost"

@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
-import { STATUS_CHIP, type VoteStatus } from "@/lib/status";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { STATUS_CHIP, STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
 import { cn, formatDay, formatTime, timeAgo } from "@/lib/utils";
 
 export default function ProposalPage() {
@@ -86,21 +87,23 @@ export default function ProposalPage() {
           </div>
 
           {/* Tally — tap a count to filter the member list */}
-          <div className="flex gap-2">
+          <ToggleGroup
+            value={filter ? [filter] : []}
+            onValueChange={(v) => setFilter((v[0] as VoteStatus) ?? null)}
+            variant="outline"
+            className="w-full"
+          >
             {(["yes", "maybe", "no"] as const).map((s) => (
-              <button
+              <ToggleGroupItem
                 key={s}
-                onClick={() => setFilter(filter === s ? null : s)}
-                className={cn(
-                  "border rounded-lg px-4 py-2 text-sm flex-1 text-center transition-colors",
-                  filter === s ? STATUS_CHIP[s] : "hover:bg-muted",
-                )}
+                value={s}
+                className={cn("flex-1 h-auto flex-col gap-0 py-2", STATUS_TOGGLE[s])}
               >
-                <span className="text-lg font-semibold block">{tally(s)}</span>
-                {s}
-              </button>
+                <span className="text-lg font-semibold">{tally(s)}</span>
+                <span className="text-sm font-normal">{s}</span>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
 
           {/* Member votes */}
           <section className="flex flex-col gap-2">
@@ -203,20 +206,22 @@ function VoteSheet({
   return (
     <BottomSheet onClose={onClose} title="Your vote">
         <h2 className="font-semibold text-lg">Your vote</h2>
-        <div className="flex gap-2">
+        <ToggleGroup
+          value={status ? [status] : []}
+          onValueChange={(v) => setStatus((v[0] as VoteStatus) ?? null)}
+          variant="outline"
+          className="w-full"
+        >
           {(["yes", "maybe", "no"] as const).map((s) => (
-            <button
+            <ToggleGroupItem
               key={s}
-              onClick={() => setStatus(s)}
-              className={cn(
-                "border rounded-lg px-4 py-2 text-sm flex-1 capitalize transition-colors",
-                status === s ? STATUS_CHIP[s] : "hover:bg-muted",
-              )}
+              value={s}
+              className={cn("flex-1 h-auto py-2 capitalize font-normal", STATUS_TOGGLE[s])}
             >
               {s}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
         <Input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
         {(save.isError || retract.isError) && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-between">
