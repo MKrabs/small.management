@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Activity, Member, Cycle, Log, Comment
 
@@ -18,12 +19,51 @@ class ActivitySerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
     me = serializers.SerializerMethodField()
+    recent_members = serializers.SerializerMethodField()
+    open_item = serializers.SerializerMethodField()
 
     def get_has_pin(self, obj):
         return obj.pin_hash is not None
 
     def get_member_count(self, obj):
         return obj.members.count()
+
+    def get_recent_members(self, obj):
+        recent = obj.members.order_by("-joined_at")[:4]
+        return MemberSerializer(recent, many=True).data
+
+    def get_open_item(self, obj):
+        """Newest open votable (poll / unfinalized proposal / upcoming event)
+        plus whether the requesting member already voted on it."""
+        member = self._own_member(obj)
+        candidates = []
+
+        poll = obj.polls.filter(deleted_at=None).order_by("-created_at").first()
+        if poll:
+            voted = bool(member) and poll.slots.filter(member=member, deleted_at=None).exists()
+            candidates.append((poll.created_at, {
+                "type": "poll", "id": poll.id, "title": poll.title, "voted": voted,
+            }))
+
+        proposal = obj.proposals.filter(deleted_at=None, event__isnull=True).order_by("-created_at").first()
+        if proposal:
+            voted = bool(member) and proposal.votes.filter(member=member, deleted_at=None).exists()
+            candidates.append((proposal.created_at, {
+                "type": "proposal", "id": proposal.id,
+                "date": str(proposal.proposed_date), "voted": voted,
+            }))
+
+        event = obj.events.filter(date__gte=timezone.localdate()).order_by("-created_at").first()
+        if event:
+            voted = bool(member) and event.rsvps.filter(member=member).exists()
+            candidates.append((event.created_at, {
+                "type": "event", "id": event.id,
+                "date": str(event.date), "voted": voted,
+            }))
+
+        if not candidates:
+            return None
+        return max(candidates, key=lambda c: c[0])[1]
 
     def _own_member(self, obj):
         request = self.context.get("request")
@@ -45,7 +85,10 @@ class ActivitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Activity
-        fields = ["id", "short_id", "title", "slug", "has_pin", "member_count", "is_member", "me", "created_at"]
+        fields = [
+            "id", "short_id", "title", "slug", "has_pin", "member_count",
+            "is_member", "me", "recent_members", "open_item", "created_at",
+        ]
 
 
 class CycleSerializer(serializers.ModelSerializer):

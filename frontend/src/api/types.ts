@@ -11,6 +11,11 @@ export type Member = {
   joined_at: string;
 };
 
+export type OpenItem =
+  | { type: "poll"; id: number; title: string; voted: boolean }
+  | { type: "proposal"; id: number; date: string; voted: boolean }
+  | { type: "event"; id: number; date: string; voted: boolean };
+
 export type Activity = {
   id: string;
   short_id: string;
@@ -20,6 +25,10 @@ export type Activity = {
   member_count: number;
   is_member: boolean;
   me: Member | null;
+  /** Last 4 members by join date — for the stacked-avatar row. */
+  recent_members: Member[];
+  /** Newest open votable + whether the requesting member voted. */
+  open_item: OpenItem | null;
   created_at: string;
 };
 
