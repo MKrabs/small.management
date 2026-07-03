@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import type { Proposal } from "@/api/types";
 
@@ -37,6 +38,7 @@ export default function CreateProposalSheet({ activityId, pollId, onClose, onCre
       qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onCreated(p);
     },
+    onError: () => toast.error("Something went wrong."),
   });
 
   return (
@@ -76,8 +78,6 @@ export default function CreateProposalSheet({ activityId, pollId, onClose, onCre
             />
           </Field>
         </FieldGroup>
-
-        {mutation.isError && <FieldError>Something went wrong.</FieldError>}
 
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>

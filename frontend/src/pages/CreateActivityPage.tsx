@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import PageShell from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity } from "@/api/types";
@@ -35,6 +36,7 @@ export default function CreateActivityPage() {
       }
       navigate(`/activity/${data.short_id}/${data.slug}`);
     },
+    onError: () => toast.error("Something went wrong. Try again."),
   });
 
   const canSubmit = title.trim() && (user || displayName.trim());
@@ -85,8 +87,6 @@ export default function CreateActivityPage() {
             )}
           </Field>
         </FieldGroup>
-
-        {mutation.error && <FieldError>Something went wrong. Try again.</FieldError>}
 
         <Button
           onClick={() => mutation.mutate()}

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import type { Comment } from "@/api/types";
 
@@ -22,6 +22,7 @@ export default function CreateCommentSheet({ activityId, onClose, onCreated }: P
     mutationFn: () =>
       api.post<Comment>(`/activities/${activityId}/comments/`, { body: body.trim() }, activityId),
     onSuccess: onCreated,
+    onError: () => toast.error("Something went wrong."),
   });
 
   return (
@@ -34,7 +35,6 @@ export default function CreateCommentSheet({ activityId, onClose, onCreated }: P
         onChange={(e) => setBody(e.target.value)}
         autoFocus
       />
-      {mutation.isError && <FieldError>Something went wrong.</FieldError>}
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button onClick={() => mutation.mutate()} disabled={!body.trim() || mutation.isPending}>

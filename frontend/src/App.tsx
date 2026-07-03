@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
 import Nav from "@/components/layout/Nav";
 import DotGridBackground from "@/components/DotGridBackground";
 import LandingPage from "@/pages/LandingPage";
@@ -14,6 +15,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <DotGridBackground />
+      {/* top-center — bottom is taken by sticky action bars and drawers */}
+      <Toaster position="top-center" />
       <Nav />
       <Routes>
         <Route path="/" element={<LandingPage />} />

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, MessageSquare, Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import type { Slot } from "@/api/types";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,6 @@ export default function SlotEditor({ activityId, pollId, mySlots, onClose }: Pro
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
 
   const byDate = useMemo(() => {
     const map = new Map<string, Entry[]>();
@@ -91,7 +91,6 @@ export default function SlotEditor({ activityId, pollId, mySlots, onClose }: Pro
 
   const save = async () => {
     setSaving(true);
-    setError(false);
     const base = `/activities/${activityId}/polls/${pollId}/slots/`;
     const originals = new Map(mySlots.filter((s) => s.date).map((s) => [s.id, s]));
     try {
@@ -123,7 +122,7 @@ export default function SlotEditor({ activityId, pollId, mySlots, onClose }: Pro
       qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onClose();
     } catch {
-      setError(true);
+      toast.error("Saving failed — try again.");
       setSaving(false);
     }
   };
@@ -158,7 +157,6 @@ export default function SlotEditor({ activityId, pollId, mySlots, onClose }: Pro
           ))}
         </div>
 
-        {error && <p className="text-sm text-destructive">Saving failed — try again.</p>}
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-4">

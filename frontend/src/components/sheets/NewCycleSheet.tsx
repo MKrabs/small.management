@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 
 export default function NewCycleSheet({
@@ -26,6 +26,7 @@ export default function NewCycleSheet({
       qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onCreated();
     },
+    onError: () => toast.error("Something went wrong."),
   });
 
   return (
@@ -42,7 +43,6 @@ export default function NewCycleSheet({
           onChange={(e) => setName(e.target.value)}
           autoFocus
         />
-        {mutation.isError && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>

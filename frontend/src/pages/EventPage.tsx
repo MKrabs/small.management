@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarPlus } from "lucide-react";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Event, Member, RSVP } from "@/api/types";
@@ -11,7 +12,6 @@ import CommentSection from "@/components/comments/CommentSection";
 import NewCycleSheet from "@/components/sheets/NewCycleSheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -232,6 +232,7 @@ function RsvpSheet({
       qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onClose();
     },
+    onError: () => toast.error("Something went wrong."),
   });
 
   return (
@@ -254,7 +255,6 @@ function RsvpSheet({
           ))}
         </ToggleGroup>
         <Input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
-        {mutation.isError && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={() => mutation.mutate()} disabled={!status || mutation.isPending}>

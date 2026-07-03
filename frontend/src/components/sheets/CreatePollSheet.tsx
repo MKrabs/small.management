@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import type { Poll } from "@/api/types";
 
@@ -21,6 +21,7 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
     mutationFn: () =>
       api.post<Poll>(`/activities/${activityId}/polls/`, { title }, activityId),
     onSuccess: onCreated,
+    onError: () => toast.error("Something went wrong."),
   });
 
   return (
@@ -33,7 +34,6 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
         autoFocus
         onKeyDown={(e) => e.key === "Enter" && title.trim() && mutation.mutate()}
       />
-      {mutation.isError && <FieldError>Something went wrong.</FieldError>}
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button
