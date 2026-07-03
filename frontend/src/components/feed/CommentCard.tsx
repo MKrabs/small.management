@@ -6,7 +6,7 @@ export default function CommentCard({ comment }: Props) {
   const deleted = !!comment.deleted_at;
 
   return (
-    <div className={`border rounded-lg p-4 flex flex-col gap-1 ${deleted ? "opacity-40" : ""}`}>
+    <div className={`border rounded-lg bg-card p-4 flex flex-col gap-1 ${deleted ? "opacity-40" : ""}`}>
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium">{comment.member?.display_name ?? "someone"}</span>
         <span className="text-xs text-muted-foreground">

@@ -57,22 +57,24 @@ export default function ActivityPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh">
       <ActivityHeader activity={activity} activityId={id} showLog={showLog} onToggleLog={() => setShowLog((v) => !v)} />
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
         {feedQ.isPending && <p className="text-muted-foreground text-sm">Loading feed…</p>}
         {feedQ.data && <ActivityFeed items={feedQ.data} activityId={id} memberCount={activity.member_count} />}
       </main>
 
-      {/* FAB */}
-      <div className="fixed bottom-6 right-6 z-20">
-        <Button
-          size="lg"
-          className="rounded-full shadow-lg h-14 w-14 text-2xl p-0"
-          onClick={() => setSheet("menu")}
-        >
-          +
-        </Button>
+      {/* FAB — pinned to the content container's right edge, not the viewport's */}
+      <div className="fixed bottom-6 inset-x-0 z-20 pointer-events-none">
+        <div className="mx-auto max-w-2xl px-4 flex justify-end">
+          <Button
+            size="lg"
+            className="pointer-events-auto rounded-full shadow-lg size-14 text-2xl p-0"
+            onClick={() => setSheet("menu")}
+          >
+            +
+          </Button>
+        </div>
       </div>
 
       {sheet === "menu" && (

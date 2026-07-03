@@ -14,7 +14,9 @@ export default function EventCard({ event }: Props) {
     <Link
       to={`event/${event.id}`}
       className={`block border-2 rounded-lg p-4 transition-colors ${
-        past ? "opacity-60 hover:bg-muted/50" : "border-primary/30 bg-primary/5 hover:bg-primary/10"
+        past
+          ? "bg-card opacity-60 hover:bg-muted/50"
+          : "border-primary/30 bg-[color-mix(in_srgb,var(--primary)_5%,var(--card))] hover:bg-[color-mix(in_srgb,var(--primary)_10%,var(--card))]"
       }`}
     >
       <span className="text-xs text-muted-foreground uppercase tracking-wide">Event</span>

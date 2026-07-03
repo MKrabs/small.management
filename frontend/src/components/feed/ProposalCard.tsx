@@ -14,7 +14,7 @@ export default function ProposalCard({ proposal }: Props) {
   return (
     <Link
       to={`proposal/${proposal.id}`}
-      className={`block border rounded-lg p-4 hover:bg-muted/50 transition-colors ${deleted ? "opacity-40" : ""}`}
+      className={`block border rounded-lg bg-card p-4 hover:bg-muted/50 transition-colors ${deleted ? "opacity-40" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div>

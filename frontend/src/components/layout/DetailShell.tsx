@@ -22,7 +22,7 @@ export default function DetailShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto max-w-2xl px-4 py-3">
           <Link
