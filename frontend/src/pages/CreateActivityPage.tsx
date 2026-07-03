@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import PageShell from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity } from "@/api/types";
@@ -41,47 +44,49 @@ export default function CreateActivityPage() {
       <div className="flex flex-col gap-6 max-w-sm mx-auto">
         <h1 className="text-2xl font-semibold">What are you planning?</h1>
 
-        <div className="flex flex-col gap-4">
-          <input
-            className="border rounded-md px-3 py-2 text-sm bg-background"
-            placeholder="Karaoke night, weekend trip…"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            autoFocus
-          />
+        <FieldGroup className="gap-4">
+          <Field>
+            <FieldLabel htmlFor="activity-title" className="sr-only">Activity title</FieldLabel>
+            <Input
+              id="activity-title"
+              placeholder="Karaoke night, weekend trip…"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+            />
+          </Field>
 
           {!user && (
-            <input
-              className="border rounded-md px-3 py-2 text-sm bg-background"
-              placeholder="Your display name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
+            <Field>
+              <FieldLabel htmlFor="activity-name" className="sr-only">Your display name</FieldLabel>
+              <Input
+                id="activity-name"
+                placeholder="Your display name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            </Field>
           )}
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted-foreground flex items-center gap-2">
-              <input
-                type="checkbox"
+          <Field className="gap-3">
+            <FieldLabel htmlFor="activity-show-pin" className="font-normal text-muted-foreground">
+              <Checkbox
+                id="activity-show-pin"
                 checked={showPin}
-                onChange={(e) => setShowPin(e.target.checked)}
+                onCheckedChange={(checked) => setShowPin(checked === true)}
               />
               Add a PIN (optional)
-            </label>
+            </FieldLabel>
             {showPin && (
-              <input
-                className="border rounded-md px-3 py-2 text-sm bg-background"
-                placeholder="PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-              />
+              <Field>
+                <FieldLabel htmlFor="activity-pin" className="sr-only">PIN</FieldLabel>
+                <Input id="activity-pin" placeholder="PIN" value={pin} onChange={(e) => setPin(e.target.value)} />
+              </Field>
             )}
-          </div>
-        </div>
+          </Field>
+        </FieldGroup>
 
-        {mutation.error && (
-          <p className="text-sm text-destructive">Something went wrong. Try again.</p>
-        )}
+        {mutation.error && <FieldError>Something went wrong. Try again.</FieldError>}
 
         <Button
           onClick={() => mutation.mutate()}

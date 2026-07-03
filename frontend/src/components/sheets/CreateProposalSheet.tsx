@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import type { Proposal } from "@/api/types";
 
@@ -38,39 +40,44 @@ export default function CreateProposalSheet({ activityId, pollId, onClose, onCre
   });
 
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} title="New proposal">
         <h2 className="font-semibold text-lg">New proposal</h2>
 
-        <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-sm">
-            Date
-            <input
+        <FieldGroup className="gap-3">
+          <Field>
+            <FieldLabel htmlFor="proposal-date">Date</FieldLabel>
+            <Input
+              id="proposal-date"
               type="date"
-              className="border rounded-md px-3 py-2 text-sm bg-background"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               autoFocus
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Time <span className="text-muted-foreground text-xs -mt-1">optional</span>
-            <input
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="proposal-time">
+              Time <span className="text-muted-foreground text-xs font-normal">optional</span>
+            </FieldLabel>
+            <Input
+              id="proposal-time"
               type="time"
               step={1800}
-              className="border rounded-md px-3 py-2 text-sm bg-background"
               value={time}
               onChange={(e) => setTime(e.target.value)}
             />
-          </label>
-          <input
-            className="border rounded-md px-3 py-2 text-sm bg-background"
-            placeholder="Note (optional) — e.g. “my place”"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        </div>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="proposal-note" className="sr-only">Note</FieldLabel>
+            <Input
+              id="proposal-note"
+              placeholder="Note (optional) — e.g. “my place”"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </Field>
+        </FieldGroup>
 
-        {mutation.isError && <p className="text-sm text-destructive">Something went wrong.</p>}
+        {mutation.isError && <FieldError>Something went wrong.</FieldError>}
 
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>

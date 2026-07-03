@@ -54,7 +54,7 @@ export default function ActivityHeader({ activity, activityId, showLog, onToggle
 
     {/* outside <header>: its backdrop-blur would trap position:fixed descendants */}
     {membersOpen && (
-      <BottomSheet onClose={() => setMembersOpen(false)}>
+      <BottomSheet onClose={() => setMembersOpen(false)} title="Members">
         <h2 className="font-semibold text-lg">Members</h2>
         <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
           {(membersQ.data ?? []).map((m) => (

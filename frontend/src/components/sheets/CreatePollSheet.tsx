@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import type { Poll } from "@/api/types";
 
@@ -22,19 +24,16 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
   });
 
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} title="New poll">
       <h2 className="font-semibold text-lg">New poll</h2>
-      <input
-        className="border rounded-md px-3 py-2 text-sm bg-background w-full"
+      <Input
         placeholder='What are we deciding? e.g. "Pick a date"'
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         autoFocus
         onKeyDown={(e) => e.key === "Enter" && title.trim() && mutation.mutate()}
       />
-      {mutation.isError && (
-        <p className="text-sm text-destructive">Something went wrong.</p>
-      )}
+      {mutation.isError && <FieldError>Something went wrong.</FieldError>}
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button

@@ -9,6 +9,8 @@ import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
 import { STATUS_CHIP, type VoteStatus } from "@/lib/status";
 import { cn, formatDay, formatTime, timeAgo } from "@/lib/utils";
@@ -199,7 +201,7 @@ function VoteSheet({
   });
 
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} title="Your vote">
         <h2 className="font-semibold text-lg">Your vote</h2>
         <div className="flex gap-2">
           {(["yes", "maybe", "no"] as const).map((s) => (
@@ -215,15 +217,8 @@ function VoteSheet({
             </button>
           ))}
         </div>
-        <input
-          className="border rounded-md px-3 py-2 text-sm bg-background"
-          placeholder="Comment (optional)"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
-        {(save.isError || retract.isError) && (
-          <p className="text-sm text-destructive">Something went wrong.</p>
-        )}
+        <Input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
+        {(save.isError || retract.isError) && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-between">
           {myVote ? (
             <Button variant="destructive" onClick={() => retract.mutate()} disabled={retract.isPending}>
@@ -272,7 +267,7 @@ function FinalizeSheet({
   });
 
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} title="Set as event">
         <div>
           <h2 className="font-semibold text-lg">Set as event</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -281,14 +276,13 @@ function FinalizeSheet({
             everyone can RSVP to.
           </p>
         </div>
-        <input
-          className="border rounded-md px-3 py-2 text-sm bg-background"
+        <Input
           placeholder="Note (optional) — e.g. “come earlier if you want”"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           autoFocus
         />
-        {mutation.isError && <p className="text-sm text-destructive">Something went wrong.</p>}
+        {mutation.isError && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
