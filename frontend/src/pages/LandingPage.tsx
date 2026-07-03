@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, User } from "@/api/types";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
@@ -34,9 +36,11 @@ function LoggedInHome({ user }: { user: User }) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-8">
       <div className="flex items-center gap-4">
-        <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-lg select-none shrink-0">
-          {initials}
-        </div>
+        <Avatar className="size-12">
+          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
         <div>
           <p className="font-semibold">{user.display_name}</p>
           <p className="text-xs text-muted-foreground">
@@ -62,12 +66,14 @@ function LoggedInHome({ user }: { user: User }) {
         )}
 
         {activitiesQ.data?.length === 0 && (
-          <div className="border border-dashed rounded-lg p-8 text-center flex flex-col gap-2">
-            <p className="text-muted-foreground text-sm">No activities yet.</p>
-            <Link to="/new" className="text-sm underline underline-offset-2">
-              Create your first one
-            </Link>
-          </div>
+          <Empty className="border border-dashed p-8">
+            <EmptyHeader>
+              <EmptyTitle className="text-muted-foreground font-normal">No activities yet.</EmptyTitle>
+              <EmptyDescription>
+                <Link to="/new">Create your first one</Link>
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
 
         {activitiesQ.data && activitiesQ.data.length > 0 && (

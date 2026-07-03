@@ -18,6 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import { STATUS_ICON, STATUS_TEXT } from "@/lib/status";
 import { formatDay, formatTime, timeAgo } from "@/lib/utils";
 
@@ -195,7 +196,8 @@ function MemberBreakdown({ slots }: { slots: Slot[] }) {
   if (byMember.length === 0) return null;
 
   return (
-    <Collapsible render={<section className="border-t pt-4" />}>
+    <Collapsible render={<section />}>
+      <Separator className="mb-4" />
       <CollapsibleTrigger className="group flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
         <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
         See individual responses

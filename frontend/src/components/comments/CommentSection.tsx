@@ -10,6 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { timeAgo } from "@/lib/utils";
 
@@ -32,7 +33,8 @@ export default function CommentSection({ activityId, target }: { activityId: str
 
   return (
     // Controlled so the comments query only runs once opened.
-    <Collapsible open={open} onOpenChange={setOpen} render={<section className="border-t pt-4" />}>
+    <Collapsible open={open} onOpenChange={setOpen} render={<section />}>
+      <Separator className="mb-4" />
       <CollapsibleTrigger className="group flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
         <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
         Comments

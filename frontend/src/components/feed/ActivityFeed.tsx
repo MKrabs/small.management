@@ -4,6 +4,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
+import { Separator } from "@/components/ui/separator";
 import type { Cycle, FeedItem, Log } from "@/api/types";
 import PollCard from "./PollCard";
 import ProposalCard from "./ProposalCard";
@@ -40,9 +42,11 @@ export default function ActivityFeed({ items, activityId, memberCount }: Props) 
 
   if (items.length === 0) {
     return (
-      <div className="py-16 text-center text-muted-foreground text-sm">
-        Nothing here yet. Use the + button to get started.
-      </div>
+      <Empty className="py-16">
+        <EmptyHeader>
+          <EmptyDescription>Nothing here yet. Use the + button to get started.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -96,7 +100,8 @@ function CycleFold({
 
   return (
     <Collapsible className="flex flex-col gap-3">
-      <CollapsibleTrigger className="group flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border-t pt-3">
+      <Separator />
+      <CollapsibleTrigger className="group flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
         <span className="font-medium">{marker.name}</span>
         <span>· {started}</span>
