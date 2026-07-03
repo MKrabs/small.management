@@ -12,17 +12,16 @@ The frontend was originally built with hand-rolled Tailwind markup and just one 
 - **Nav user menu** → `DropdownMenu` (PR #4)
 - **`BottomSheet`** → `Drawer` (base-ui, mobile-first bottom panel). Single internal swap; every consumer (~10 sheets) now gets a real focus trap, ESC-to-close, and ARIA dialog semantics for free (PR #6)
 - **Form inputs** → `Input` / `Textarea` / `Field` / `FieldGroup` / `FieldLabel` / `FieldError` / `Checkbox` across login, register, create-activity, join, and all create-poll/proposal/comment/cycle + RSVP/vote/finalize sheets (PR #6)
+- **Status pickers** → `ToggleGroup` in `SlotEditor` (status pills), `EventPage`/`ProposalPage` (tally filters), the RSVP/vote sheet pickers, and `LandingPage`'s demo vote buttons. Pressed-state colors live in `STATUS_TOGGLE` (`lib/status.ts`), `aria-pressed:`-scoped so the component's own state drives styling; retired the duplicated `VOTE_STYLES`.
+- **Status chips** → `Badge` with custom `yes`/`maybe`/`no` variants (`ui/badge.tsx`); retired `STATUS_CHIP`. `STATUS_TEXT`/`STATUS_ICON` stay — the colored ✓/~/✗ glyphs in `PollPage`/`Heatmap` aren't chips.
+- **`window.confirm`** → `AlertDialog` via a shared `ConfirmDelete` wrapper (poll, proposal, and comment deletion).
+- **Disclosure toggles** → `Collapsible` (`ActivityFeed.CycleFold`, `CommentSection`, `PollPage.MemberBreakdown`); the comments one stays controlled so its query only runs once opened.
+- **Initials circle** → `Avatar` + `AvatarFallback`; **empty states** → `Empty`; **`border-t` dividers** → `Separator` (`ActivityFeed`, `CommentSection`, `PollPage`).
+- **Generic mutation errors** → `sonner` toasts (top-center; bottom is occupied by sticky bars and drawers). Field-level validation errors (wrong password, taken name, wrong PIN) stay inline. The `Toaster` is pinned to light theme until something actually toggles `.dark`.
 
 ## To do
 
-- **`ToggleGroup`** for the yes/maybe/no and RSVP pickers — currently a manually-looped `Button` with active-state classes in `SlotEditor` (status pills), `EventPage`/`ProposalPage` (RSVP/vote tally + filter buttons), the `VoteSheet`/`RsvpSheet` status pickers, and `LandingPage`'s demo vote buttons.
-- **`Badge`** for status chips — retire `STATUS_CHIP`/`STATUS_TEXT` (`lib/status.ts`) and the duplicated `VOTE_STYLES` in `LandingPage.tsx` in favor of Badge variants.
-- **`AlertDialog`** for the three destructive-action confirmations that currently use `window.confirm(...)`: deleting a poll (`PollPage`), a proposal (`ProposalPage`), and a comment (`CommentSection`).
-- **`Collapsible`** for the three hand-rolled disclosure toggles (`useState` + rotating `ChevronRight`): `ActivityFeed.CycleFold`, `CommentSection`'s comment thread, `PollPage.MemberBreakdown`.
-- **`Avatar` + `AvatarFallback`** for the initials circle in `LandingPage.LoggedInHome` (currently a manual `rounded-full` div).
-- **`Separator`** for manual `border-t` dividers in `ActivityFeed`, `CommentSection`, `PollPage`.
-- **`Empty`** for empty states — "Nothing here yet" (`ActivityFeed`) and "No activities yet" (`LandingPage`).
-- Lower priority: move generic "Something went wrong" mutation-failure messages to `sonner` toast instead of inline text, so errors don't shift layout. Field-level validation errors (wrong password, taken name) should stay inline.
+Nothing queued — the list above cleared the backlog.
 
 ## Deliberately not migrating
 
