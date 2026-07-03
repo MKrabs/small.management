@@ -20,3 +20,7 @@
 * [Proposal View](screens/proposal-view.md) - A specific date+time others vote on and can finalize.
 * [Event View](screens/event-view.md) - The fixed outcome — RSVP, share the date, close the loop.
 * [Account Screens](screens/accounts.md) - Optional accounts — persistent identity and activity list.
+
+## Engineering
+
+* [shadcn Migration](shadcn-migration.md) - Tracks the incremental migration from hand-rolled Tailwind markup to shadcn/ui components.
