@@ -1,5 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Menu } from "@base-ui/react/menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth";
 import { useApi } from "@/hooks/useApi";
 
@@ -24,23 +30,18 @@ export default function Nav() {
         small.management
       </Link>
       {user ? (
-        <Menu.Root>
-          <Menu.Trigger className="text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
             {user.display_name}
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Positioner sideOffset={8} align="end">
-              <Menu.Popup className="min-w-32 rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-md outline-none">
-                <Menu.Item
-                  onClick={handleLogout}
-                  className="cursor-pointer rounded-md px-3 py-1.5 text-destructive outline-none data-[highlighted]:bg-muted"
-                >
-                  Log out
-                </Menu.Item>
-              </Menu.Popup>
-            </Menu.Positioner>
-          </Menu.Portal>
-        </Menu.Root>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : (
         <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           Log in
