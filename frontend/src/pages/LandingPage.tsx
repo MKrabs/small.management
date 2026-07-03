@@ -4,13 +4,14 @@ import ChatIllustration from "@/components/landing/ChatIllustration";
 import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
-import type { Activity, User } from "@/api/types";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { Activity, OpenItem, User } from "@/api/types";
+import UserAvatar from "@/components/UserAvatar";
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
-import { cn } from "@/lib/utils";
+import { cn, formatDay } from "@/lib/utils";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -26,21 +27,10 @@ function LoggedInHome({ user }: { user: User }) {
     queryFn: () => api.get<Activity[]>("/activities/"),
   });
 
-  const initials = user.display_name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-8">
       <div className="flex items-center gap-4">
-        <Avatar className="size-12">
-          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar name={user.display_name} className="size-12" textClassName="text-lg" />
         <div>
           <p className="font-semibold">{user.display_name}</p>
           <p className="text-xs text-muted-foreground">
@@ -82,12 +72,31 @@ function LoggedInHome({ user }: { user: User }) {
               <li key={a.id}>
                 <Link
                   to={`/activity/${a.short_id}/${a.slug}`}
-                  className="flex items-center justify-between border rounded-lg px-4 py-3 hover:bg-muted transition-colors"
+                  className="flex items-center justify-between gap-3 border rounded-lg bg-card px-4 py-3 hover:bg-muted transition-colors"
                 >
-                  <span className="font-medium">{a.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {a.member_count} member{a.member_count !== 1 ? "s" : ""}
-                  </span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="font-medium truncate">{a.title}</span>
+                    {a.open_item && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <span className="truncate">{openItemLabel(a.open_item)}</span>
+                        {!a.open_item.voted && (
+                          <span className="flex items-center gap-1 shrink-0 text-primary/80">
+                            <span className="size-1.5 rounded-full bg-primary/60 animate-pulse" />
+                            {a.open_item.type === "event" ? "no RSVP yet" : "you haven't voted"}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <AvatarGroup className="shrink-0">
+                    {/* backend sends newest-first; oldest → newest reads left → right */}
+                    {[...a.recent_members].reverse().map((m) => (
+                      <UserAvatar key={m.id} name={m.display_name} />
+                    ))}
+                    {a.member_count > 4 && (
+                      <AvatarGroupCount>+{a.member_count - 4}</AvatarGroupCount>
+                    )}
+                  </AvatarGroup>
                 </Link>
               </li>
             ))}
@@ -96,6 +105,12 @@ function LoggedInHome({ user }: { user: User }) {
       </div>
     </div>
   );
+}
+
+function openItemLabel(item: OpenItem): string {
+  if (item.type === "poll") return `Poll “${item.title}”`;
+  const day = formatDay(item.date);
+  return item.type === "proposal" ? `Proposal for ${day}` : `Event on ${day}`;
 }
 
 // ─── Marketing home ───────────────────────────────────────────────────────────
