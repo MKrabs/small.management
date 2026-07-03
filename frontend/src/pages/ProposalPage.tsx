@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
+import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { STATUS_CHIP, STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
+import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
 import { cn, formatDay, formatTime, timeAgo } from "@/lib/utils";
 
 export default function ProposalPage() {
@@ -158,14 +159,9 @@ function VoteRow({ member, vote }: { member: Member; vote: ProposalVote | undefi
       {vote?.comment && (
         <span className="text-xs text-muted-foreground truncate max-w-[40%]">“{vote.comment}”</span>
       )}
-      <span
-        className={cn(
-          "text-xs px-2.5 py-1 rounded-full border shrink-0",
-          vote ? STATUS_CHIP[vote.status] : "text-muted-foreground",
-        )}
-      >
+      <Badge variant={vote ? vote.status : "outline"} className={cn(!vote && "text-muted-foreground")}>
         {vote?.status ?? "no vote"}
-      </span>
+      </Badge>
     </div>
   );
 }

@@ -13,8 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
+import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { STATUS_CHIP, STATUS_TOGGLE } from "@/lib/status";
+import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
 import { cn, formatDay, formatTime, isEventPast, timeAgo } from "@/lib/utils";
 
 type RsvpStatus = RSVP["status"];
@@ -24,10 +25,11 @@ const RSVP_LABEL: Record<RsvpStatus, string> = {
   maybe: "maybe",
   not_going: "not going",
 };
-const RSVP_CHIP: Record<RsvpStatus, string> = {
-  going: STATUS_CHIP.yes,
-  maybe: STATUS_CHIP.maybe,
-  not_going: STATUS_CHIP.no,
+// RSVP statuses reuse the yes/maybe/no palette.
+const RSVP_STATUS: Record<RsvpStatus, VoteStatus> = {
+  going: "yes",
+  maybe: "maybe",
+  not_going: "no",
 };
 const RSVP_TOGGLE: Record<RsvpStatus, string> = {
   going: STATUS_TOGGLE.yes,
@@ -120,14 +122,12 @@ export default function EventPage() {
                   {rsvp?.comment && (
                     <span className="text-xs text-muted-foreground truncate max-w-[40%]">“{rsvp.comment}”</span>
                   )}
-                  <span
-                    className={cn(
-                      "text-xs px-2.5 py-1 rounded-full border shrink-0",
-                      rsvp ? RSVP_CHIP[rsvp.status] : "text-muted-foreground",
-                    )}
+                  <Badge
+                    variant={rsvp ? RSVP_STATUS[rsvp.status] : "outline"}
+                    className={cn("shrink-0", !rsvp && "text-muted-foreground")}
                   >
                     {rsvp ? RSVP_LABEL[rsvp.status] : "no answer"}
-                  </span>
+                  </Badge>
                 </div>
               ))}
           </section>

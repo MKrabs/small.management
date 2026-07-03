@@ -13,14 +13,9 @@ export const STATUS_TEXT: Record<VoteStatus, string> = {
   no: "text-red-500 dark:text-red-400",
 };
 
-// Selected pill / chip style
-export const STATUS_CHIP: Record<VoteStatus, string> = {
-  yes: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
-  maybe: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
-  no: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
-};
+// Display chips are Badge variants (yes/maybe/no) — see components/ui/badge.tsx.
 
-// STATUS_CHIP for ToggleGroup items — aria-pressed:-scoped so the pressed state
+// Chip palette for ToggleGroup items — aria-pressed:-scoped so the pressed state
 // drives the styling (and overrides the toggle's default aria-pressed:bg-muted).
 export const STATUS_TOGGLE: Record<VoteStatus, string> = {
   yes: "aria-pressed:bg-green-100 aria-pressed:hover:bg-green-100 aria-pressed:text-green-700 aria-pressed:border-green-300 dark:aria-pressed:bg-green-900/30 dark:aria-pressed:hover:bg-green-900/30 dark:aria-pressed:text-green-400 dark:aria-pressed:border-green-800",
