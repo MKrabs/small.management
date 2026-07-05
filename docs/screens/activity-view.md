@@ -45,7 +45,7 @@ Reverse-chronological. Three card types plus log entries and cycle folds. Poll c
 - Participation count: "4 of 6 voted" · created by · timestamp
 - Latest 3 top-level comments, read-only, with "View all N comments"
 - Tapping title or comments opens the Poll view
-- Soft-deleted state: greyed out, struck through, voting removed
+- Archived state: greyed out, struck through, voting removed
 
 Per kind:
 - **Choice** — vote directly on the card: two big side-by-side buttons with voter avatars beneath (2 options) or bar rows with counts and avatar chips (3+). Anyone can add an option from the card.
@@ -68,7 +68,7 @@ Per kind:
 
 ### Log Entry (when toggle is on)
 - Single line of text between cards
-- Example: `Alex set poll #2 as deleted · 3h ago`
+- Example: `Alex archived a poll · 3h ago`
 - Not a card — styled as a subtle separator
 
 ### Cycle Fold

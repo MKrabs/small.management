@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Slot } from "@/api/types";
+import Crown from "@/components/Crown";
 import { STATUS_ICON, STATUS_TEXT } from "@/lib/status";
 import { cn, formatDay, parseLocalDate } from "@/lib/utils";
 
@@ -60,6 +61,9 @@ export default function Heatmap({ slots }: { slots: Slot[] }) {
     ),
   );
 
+  const dayBest = (d: string) =>
+    hasTime ? Math.max(...minuteRows.map((m) => countAt(d, m))) : countAt(d, null);
+
   const fmtMin = (m: number) =>
     `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
@@ -97,6 +101,9 @@ export default function Heatmap({ slots }: { slots: Slot[] }) {
                 {parseLocalDate(d).toLocaleDateString(undefined, { weekday: "short" })}
                 <br />
                 {parseLocalDate(d).getDate()}
+                {max >= 2 && dayBest(d) === max && (
+                  <Crown className="inline-block h-2.5 w-3.5 ml-0.5 text-amber-500" />
+                )}
               </span>
             ))}
           </div>

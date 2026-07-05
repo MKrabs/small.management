@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen, Plus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Poll, Slot } from "@/api/types";
@@ -15,7 +15,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import FinalizeSheet from "@/components/sheets/FinalizeSheet";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import SlotEditor from "@/components/poll/SlotEditor";
 import Heatmap from "@/components/poll/Heatmap";
 import ChoicePoll from "@/components/poll/ChoicePoll";
@@ -27,19 +27,24 @@ import { formatDay, formatTime, timeAgo } from "@/lib/utils";
 
 export default function PollPage() {
   const { pollId = "" } = useParams();
-  const { id, slug, activity } = useActivity();
+  const { id, activity } = useActivity();
   const api = useApi();
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const [editorOpen, setEditorOpen] = useState(false);
-  const [finalizeOpen, setFinalizeOpen] = useState(false);
 
-  const deleteMut = useMutation({
-    mutationFn: () => api.del(`/activities/${id}/polls/${pollId}/`, id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["poll", id, pollId] });
-      qc.invalidateQueries({ queryKey: ["feed", id] });
-    },
+  const invalidatePoll = () => {
+    qc.invalidateQueries({ queryKey: ["poll", id, pollId] });
+    qc.invalidateQueries({ queryKey: ["feed", id] });
+  };
+
+  const archiveMut = useMutation({
+    mutationFn: (archived: boolean) => api.patch(`/activities/${id}/polls/${pollId}/`, { archived }, id),
+    onSuccess: invalidatePoll,
+  });
+
+  const lockMut = useMutation({
+    mutationFn: (locked: boolean) => api.patch(`/activities/${id}/polls/${pollId}/`, { locked }, id),
+    onSuccess: invalidatePoll,
   });
 
   const pollQ = useQuery({
@@ -71,21 +76,33 @@ export default function PollPage() {
           <div>
             <div className="flex items-start justify-between gap-2">
               <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                Poll{pollQ.data.deleted_at && " · deleted"}
+                Poll{pollQ.data.deleted_at && " · archived"}
+                {!pollQ.data.deleted_at && pollQ.data.locked_at && " · voting finished"}
               </span>
-              {!pollQ.data.deleted_at && (
+              {pollQ.data.deleted_at ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => archiveMut.mutate(false)}
+                >
+                  <ArchiveRestore data-icon="inline-start" />
+                  Unarchive
+                </Button>
+              ) : (
                 <ConfirmDelete
-                  title="Delete this poll?"
-                  description="It's deleted for everyone but stays visible, struck through."
-                  onConfirm={() => deleteMut.mutate()}
+                  title="Archive this poll?"
+                  actionLabel="Archive"
+                  description="It's archived for everyone but stays visible, struck through. You can unarchive it anytime."
+                  onConfirm={() => archiveMut.mutate(true)}
                   trigger={
                     <Button
                       variant="ghost"
                       size="icon-xs"
                       className="text-muted-foreground"
-                      aria-label="Delete poll"
+                      aria-label="Archive poll"
                     >
-                      <Trash2 />
+                      <Archive />
                     </Button>
                   }
                 />
@@ -134,6 +151,7 @@ export default function PollPage() {
                 {mySlots.length > 0 && (
                   <button
                     className="flex flex-col gap-1.5 text-left border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+                    disabled={!!pollQ.data.locked_at}
                     onClick={() => setEditorOpen(true)}
                   >
                     {mySlots.map((s) => (
@@ -141,10 +159,12 @@ export default function PollPage() {
                     ))}
                   </button>
                 )}
-                <Button variant="outline" size="sm" className="self-start" onClick={() => setEditorOpen(true)}>
-                  <Plus data-icon="inline-start" />
-                  {mySlots.length > 0 ? "Edit availability" : "Share availability"}
-                </Button>
+                {!pollQ.data.locked_at && (
+                  <Button variant="outline" size="sm" className="self-start" onClick={() => setEditorOpen(true)}>
+                    <Plus data-icon="inline-start" />
+                    {mySlots.length > 0 ? "Edit availability" : "Share availability"}
+                  </Button>
+                )}
               </section>
 
               {/* Per-member breakdown */}
@@ -158,9 +178,17 @@ export default function PollPage() {
 
       {pollQ.data && !pollQ.data.deleted_at && (
         <StickyBar>
-          <Button className="flex-1" size="lg" onClick={() => setFinalizeOpen(true)}>
-            Finalize into event
-          </Button>
+          {pollQ.data.locked_at ? (
+            <Button variant="outline" className="flex-1" size="lg" disabled={lockMut.isPending} onClick={() => lockMut.mutate(false)}>
+              <LockOpen data-icon="inline-start" />
+              Resume voting
+            </Button>
+          ) : (
+            <Button className="flex-1" size="lg" disabled={lockMut.isPending} onClick={() => lockMut.mutate(true)}>
+              <Lock data-icon="inline-start" />
+              Finish voting
+            </Button>
+          )}
         </StickyBar>
       )}
 
@@ -170,17 +198,6 @@ export default function PollPage() {
           pollId={pollId}
           mySlots={mySlots}
           onClose={() => setEditorOpen(false)}
-        />
-      )}
-      {finalizeOpen && pollQ.data && (
-        <FinalizeSheet
-          activityId={id}
-          poll={pollQ.data}
-          onClose={() => setFinalizeOpen(false)}
-          onCreated={(ev) => {
-            qc.invalidateQueries({ queryKey: ["feed", id] });
-            navigate(`/activity/${id}/${slug}/event/${ev.id}`);
-          }}
         />
       )}
     </DetailShell>
@@ -214,6 +231,8 @@ function SlotRow({ slot }: { slot: Slot }) {
 }
 
 function MemberBreakdown({ slots }: { slots: Slot[] }) {
+  const [mode, setMode] = useState<"selection" | "person">("selection");
+
   const byMember = useMemo(() => {
     const map = new Map<string, { name: string; slots: Slot[] }>();
     for (const s of slots) {
@@ -222,6 +241,22 @@ function MemberBreakdown({ slots }: { slots: Slot[] }) {
       map.set(s.member.id, entry);
     }
     return [...map.values()].map((m) => ({ ...m, slots: sortSlots(m.slots) }));
+  }, [slots]);
+
+  const bySelection = useMemo(() => {
+    const map = new Map<string, { label: string; slots: Slot[] }>();
+    for (const s of sortSlots(slots)) {
+      const key = `${s.date ?? "general"}|${s.date_end ?? ""}`;
+      const label = !s.date
+        ? "General"
+        : s.date_end && s.date_end !== s.date
+          ? `${formatDay(s.date)} – ${formatDay(s.date_end)}`
+          : formatDay(s.date);
+      const entry = map.get(key) ?? { label, slots: [] };
+      entry.slots.push(s);
+      map.set(key, entry);
+    }
+    return [...map.values()];
   }, [slots]);
 
   if (byMember.length === 0) return null;
@@ -234,14 +269,49 @@ function MemberBreakdown({ slots }: { slots: Slot[] }) {
         See individual responses
       </CollapsibleTrigger>
       <CollapsibleContent className="flex flex-col gap-4">
-        {byMember.map((m) => (
-          <div key={m.name} className="flex flex-col gap-1">
-            <p className="text-sm font-medium">{m.name}</p>
-            {m.slots.map((s) => (
-              <SlotRow key={s.id} slot={s} />
-            ))}
-          </div>
-        ))}
+        <ToggleGroup
+          value={[mode]}
+          onValueChange={(v) => v[0] && setMode(v[0] as "selection" | "person")}
+          variant="outline"
+          size="sm"
+          className="self-start"
+        >
+          <ToggleGroupItem value="selection">By selection</ToggleGroupItem>
+          <ToggleGroupItem value="person">By person</ToggleGroupItem>
+        </ToggleGroup>
+
+        {mode === "person" &&
+          byMember.map((m) => (
+            <div key={m.name} className="flex flex-col gap-1">
+              <p className="text-sm font-medium">{m.name}</p>
+              {m.slots.map((s) => (
+                <SlotRow key={s.id} slot={s} />
+              ))}
+            </div>
+          ))}
+
+        {mode === "selection" &&
+          bySelection.map((g) => (
+            <div key={g.label} className="flex flex-col gap-1">
+              <p className="text-sm font-medium">{g.label}</p>
+              {g.slots.map((s) => (
+                <span key={s.id} className="flex items-baseline gap-2 text-sm">
+                  <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[s.status]}`}>
+                    {STATUS_ICON[s.status]}
+                  </span>
+                  <span>
+                    {s.member.display_name}
+                    {s.time_start && s.time_end && (
+                      <span className="text-muted-foreground">
+                        {" "}· {formatTime(s.time_start)}–{formatTime(s.time_end)}
+                      </span>
+                    )}
+                  </span>
+                  {s.note && <span className="text-muted-foreground truncate">“{s.note}”</span>}
+                </span>
+              ))}
+            </div>
+          ))}
       </CollapsibleContent>
     </Collapsible>
   );

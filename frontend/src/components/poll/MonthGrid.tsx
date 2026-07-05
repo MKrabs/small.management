@@ -29,13 +29,15 @@ type Props = {
   /** Fired live while dragging and once on release with the covered days. Enables drag selection. */
   onDragMove?: (dates: string[]) => void;
   onDragEnd?: (dates: string[]) => void;
+  /** "range" spans start→current; "paint" collects only days the pointer touched. */
+  dragMode?: "range" | "paint";
 };
 
 /**
  * Monday-first month calendar with tap and drag-select via pointer events.
  * Past days are disabled. Consumers style cells through dayCell.
  */
-export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDragMove, onDragEnd }: Props) {
+export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDragMove, onDragEnd, dragMode = "range" }: Props) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStr = toDateStr(today);
@@ -51,7 +53,7 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
     ...Array.from({ length: daysInMonth }, (_, i) => new Date(month.getFullYear(), month.getMonth(), i + 1)),
   ];
 
-  const drag = useRef<{ start: string; current: string } | null>(null);
+  const drag = useRef<{ start: string; current: string; painted: string[] } | null>(null);
 
   const dayAt = (x: number, y: number): string | null => {
     const el = document.elementFromPoint(x, y)?.closest("[data-date]");
@@ -59,10 +61,15 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
     return date && date >= todayStr ? date : null;
   };
 
+  const covered = () => {
+    const d = drag.current!;
+    return dragMode === "paint" ? d.painted : datesBetween(d.start, d.current);
+  };
+
   const handleDown = (e: React.PointerEvent) => {
     const day = dayAt(e.clientX, e.clientY);
     if (!day) return;
-    drag.current = { start: day, current: day };
+    drag.current = { start: day, current: day, painted: [day] };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -71,16 +78,18 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
     const day = dayAt(e.clientX, e.clientY);
     if (day && day !== drag.current.current) {
       drag.current.current = day;
-      onDragMove?.(datesBetween(drag.current.start, day));
+      if (!drag.current.painted.includes(day)) drag.current.painted.push(day);
+      onDragMove?.(covered());
     }
   };
 
   const handleUp = () => {
     if (!drag.current) return;
-    const { start, current } = drag.current;
+    const { start } = drag.current;
+    const days = covered();
     drag.current = null;
-    if (start === current) onTap?.(start);
-    else onDragEnd?.(datesBetween(start, current));
+    if (days.length === 1 && days[0] === start) onTap?.(start);
+    else onDragEnd?.(days);
   };
 
   return (

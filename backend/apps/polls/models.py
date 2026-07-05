@@ -18,6 +18,7 @@ class Poll(models.Model):
     created_by = models.ForeignKey("activities.Member", on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    locked_at = models.DateTimeField(null=True, blank=True)  # voting finished (reversible)
 
     def __str__(self):
         return self.title
@@ -27,12 +28,13 @@ class Option(models.Model):
     """A votable option on a choice poll. Any member can add one."""
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name="options")
     label = models.CharField(max_length=200)
+    position = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey("activities.Member", on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ["created_at"]
+        ordering = ["position", "created_at"]
 
     def __str__(self):
         return f"{self.label} ({self.poll})"

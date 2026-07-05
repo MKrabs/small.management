@@ -89,6 +89,50 @@ class PollKindTests(TestCase):
         self.assertEqual(res.status_code, 201)
         self.assertEqual(res.json()["date"], "2026-07-10")
 
+    def test_reorder_options(self):
+        poll = self._create(title="Pizza?", kind="choice", options=["A", "B", "C"]).json()
+        ids = [o["id"] for o in poll["options"]]
+        bad = self.client.patch(f"{self.base}/polls/{poll['id']}/options/", {"order": ids[:2]}, format="json")
+        self.assertEqual(bad.status_code, 400)
+        new_order = [ids[2], ids[0], ids[1]]
+        data = self.client.patch(f"{self.base}/polls/{poll['id']}/options/", {"order": new_order}, format="json").json()
+        self.assertEqual([o["id"] for o in data["options"]], new_order)
+
+    def test_remove_voted_option_posts_system_warning(self):
+        poll = self._create(title="Pizza?", kind="choice", options=["Yes", "No"]).json()
+        opt = poll["options"][0]["id"]
+        self.client.put(f"{self.base}/polls/{poll['id']}/options/{opt}/vote/")
+        data = self.client.delete(f"{self.base}/polls/{poll['id']}/options/{opt}/").json()
+        self.assertEqual(len(data["options"]), 1)
+        self.assertEqual(data["voter_count"], 0)  # vote was invalidated
+        warning = data["latest_comments"][0]
+        self.assertIn("⚠️", warning["body"])
+        self.assertIsNone(warning["member"])
+
+    def test_remove_unvoted_option_stays_silent(self):
+        poll = self._create(title="Pizza?", kind="choice", options=["Yes", "No"]).json()
+        data = self.client.delete(f"{self.base}/polls/{poll['id']}/options/{poll['options'][0]['id']}/").json()
+        self.assertEqual(data["comment_count"], 0)
+
+    def test_archive_and_unarchive_poll(self):
+        poll = self._create(title="Pizza?", kind="choice", options=["Yes", "No"]).json()
+        url = f"{self.base}/polls/{poll['id']}/"
+        archived = self.client.patch(url, {"archived": True}, format="json").json()
+        self.assertIsNotNone(archived["deleted_at"])
+        restored = self.client.patch(url, {"archived": False}, format="json").json()
+        self.assertIsNone(restored["deleted_at"])
+
+    def test_lock_voting_blocks_votes_and_is_reversible(self):
+        poll = self._create(title="Pizza?", kind="choice", options=["Yes", "No"]).json()
+        url = f"{self.base}/polls/{poll['id']}/"
+        opt = poll["options"][0]["id"]
+        locked = self.client.patch(url, {"locked": True}, format="json").json()
+        self.assertIsNotNone(locked["locked_at"])
+        self.assertEqual(self.client.put(f"{url}options/{opt}/vote/").status_code, 400)
+        self.assertEqual(self.client.post(f"{url}options/", {"label": "Maybe"}, format="json").status_code, 400)
+        self.client.patch(url, {"locked": False}, format="json")
+        self.assertEqual(self.client.put(f"{url}options/{opt}/vote/").status_code, 200)
+
     def test_feed_poll_includes_kind_and_comments(self):
         poll = self._create(title="Pizza?", kind="choice", options=["Yes", "No"]).json()
         self.client.post(f"{self.base}/comments/", {"body": "hot take", "poll": poll["id"]}, format="json")

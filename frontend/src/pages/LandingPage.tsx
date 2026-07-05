@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import ChatIllustration from "@/components/landing/ChatIllustration";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
@@ -25,6 +31,8 @@ function LoggedInHome({ user }: { user: User }) {
     queryKey: ["my-activities"],
     queryFn: () => api.get<Activity[]>("/activities/"),
   });
+  const active = (activitiesQ.data ?? []).filter((a) => !a.archived_at);
+  const archived = (activitiesQ.data ?? []).filter((a) => a.archived_at);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-8">
@@ -65,25 +73,41 @@ function LoggedInHome({ user }: { user: User }) {
           </Empty>
         )}
 
-        {activitiesQ.data && activitiesQ.data.length > 0 && (
-          <ul className="flex flex-col gap-2">
-            {activitiesQ.data.map((a) => (
-              <li key={a.id}>
-                <Link
-                  to={`/activity/${a.short_id}/${a.slug}`}
-                  className="flex items-center justify-between gap-3 border rounded-lg bg-card px-4 py-3 hover:bg-muted transition-colors"
-                >
-                  <span className="font-medium truncate">{a.title}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {a.member_count} member{a.member_count !== 1 ? "s" : ""}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+        {active.length > 0 && <ActivityList activities={active} />}
+
+        {archived.length > 0 && (
+          <Collapsible className="flex flex-col gap-2">
+            <CollapsibleTrigger className="group flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
+              Archived ({archived.length})
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ActivityList activities={archived} className="opacity-60" />
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </div>
     </div>
+  );
+}
+
+function ActivityList({ activities, className }: { activities: Activity[]; className?: string }) {
+  return (
+    <ul className={cn("flex flex-col gap-2", className)}>
+      {activities.map((a) => (
+        <li key={a.id}>
+          <Link
+            to={`/activity/${a.short_id}/${a.slug}`}
+            className="flex items-center justify-between gap-3 border rounded-lg bg-card px-4 py-3 hover:bg-muted transition-colors"
+          >
+            <span className="font-medium truncate">{a.title}</span>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {a.member_count} member{a.member_count !== 1 ? "s" : ""}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 

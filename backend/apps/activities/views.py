@@ -67,6 +67,11 @@ class ActivityDetailView(ActivityMixin, APIView):
             activity.title = title
             activity.save()
             Log.record(activity, member, "renamed_activity", title=title)
+        if "archived" in request.data:
+            archived = bool(request.data["archived"])
+            activity.archived_at = timezone.now() if archived else None
+            activity.save()
+            Log.record(activity, member, "archived" if archived else "unarchived", target="activity")
         return Response(self._serialize(activity).data)
 
 
@@ -213,11 +218,13 @@ class CommentListCreateView(ActivityMixin, APIView):
 
 
 class CommentDetailView(ActivityMixin, APIView):
-    def delete(self, request, activity_id, pk):
+    def patch(self, request, activity_id, pk):
         activity = self.get_activity()
         member = self.get_member()
         comment = get_object_or_404(Comment, id=pk, activity=activity)
-        comment.deleted_at = timezone.now()
-        comment.save()
-        Log.record(activity, member, "soft_deleted", target="comment", target_id=pk)
+        if "archived" in request.data:
+            archived = bool(request.data["archived"])
+            comment.deleted_at = timezone.now() if archived else None
+            comment.save()
+            Log.record(activity, member, "archived" if archived else "unarchived", target="comment", target_id=pk)
         return Response(CommentSerializer(comment).data)

@@ -21,7 +21,7 @@ Dedicated page for one decision. Reached by tapping its feed card. Shows the ful
 ├─────────────────────────────┤
 │  Comments (full tree)       │
 └─────────────────────────────┘
-   [ Finalize into event ]  ← sticky bottom
+   [ Finish voting ]  ← sticky bottom
 ```
 
 ## Poll Header
@@ -29,7 +29,7 @@ Dedicated page for one decision. Reached by tapping its feed card. Shows the ful
 - Kind label + poll title / question
 - Created by · timestamp
 - "X of Y members have voted"
-- Delete (soft) in the corner
+- Archive in the corner (unarchive when archived)
 
 ## Voting UI per Kind
 
@@ -40,12 +40,12 @@ Dedicated page for one decision. Reached by tapping its feed card. Shows the ful
 
 ## Per-member Breakdown
 
-Collapsed by default ("See individual responses"). Expands to show each member's votes. Useful for reading the room before finalizing.
+Collapsed by default ("See individual responses"). Expands with a By selection / By person toggle (default: by selection) — group votes per day or per member. Useful for reading the room before finishing the vote.
 
 ## Comments
 
-Full Reddit-style tree, open by default: nested replies with indent, collapse per branch, reply and delete inline. The feed card only previews the latest 3 top-level comments; this page is where members actually comment.
+Full Reddit-style tree, open by default: nested replies with indent, collapse per branch, reply and archive inline. The feed card only previews the latest 3 top-level comments; this page is where members actually comment.
 
 ## Sticky Bottom
 
-- **Finalize into event** — any member, any time, no threshold. Opens a sheet: date (required), time range and note (optional) → creates the Event and navigates to it.
+- **Finish voting** — any member, any time, no threshold. Locks the poll: no more votes or option changes, leading choice(s) crowned. Becomes **Resume voting** on a finished poll (reversible).
