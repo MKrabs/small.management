@@ -127,6 +127,10 @@
   html {
     @apply font-sans;
     }
+  /* Tailwind v4 preflight resets buttons to cursor: default */
+  button:not(:disabled) {
+    cursor: pointer;
+    }
 }
 
 .marker-highlight {

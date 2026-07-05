@@ -82,20 +82,21 @@ export default function DatePoll({ poll, activityId, slots }: Props) {
       dragMode="paint"
       dayCell={(day) => {
         const mine = mySlotByDay.has(day);
+        // painted days render as selected immediately, not as a separate preview style
+        const filled = mine || previewSet.has(day);
         const count = countByDay.get(day) ?? 0;
         const others = count - (mine ? 1 : 0);
         const top = maxCount >= 2 && count === maxCount;
         return {
           className: cn(
-            mine && "bg-primary text-primary-foreground font-medium hover:bg-primary/90",
-            !mine && others > 0 && (others >= 3 ? "bg-primary/25" : "bg-primary/10"),
-            previewSet.has(day) && "ring-2 ring-primary ring-inset",
+            filled && "bg-primary text-primary-foreground font-medium hover:bg-primary/90",
+            !filled && others > 0 && (others >= 3 ? "bg-primary/25" : "bg-primary/10"),
           ),
           content: (
             <>
-              {top && <Crown className={cn("absolute top-0.5 right-1 h-2.5 w-3.5", mine ? "text-primary-foreground" : "text-amber-500")} />}
+              {top && <Crown className={cn("absolute top-0.5 right-1 h-2.5 w-3.5", filled ? "text-primary-foreground" : "text-amber-500")} />}
               {count > 0 && (
-                <span className={cn("text-[9px] leading-none mt-0.5", mine ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                <span className={cn("text-[9px] leading-none mt-0.5", filled ? "text-primary-foreground/80" : "text-muted-foreground")}>
                   {count}
                 </span>
               )}

@@ -125,7 +125,7 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
 
       {/* ponytail: touch-action none blocks page scroll over the grid; long-press-to-drag if that grates */}
       <div
-        className="grid grid-cols-7 gap-y-1"
+        className="grid grid-cols-7 gap-1"
         style={{ touchAction: onDragEnd ? "none" : undefined }}
         onPointerDown={handleDown}
         onPointerMove={handleMove}
@@ -148,7 +148,13 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
                 cell.className,
               )}
             >
-              {d.getDate()}
+              {dateStr === todayStr ? (
+                <span className="grid size-6 place-items-center rounded-full border-2 border-red-500">
+                  {d.getDate()}
+                </span>
+              ) : (
+                d.getDate()
+              )}
               {cell.content}
             </button>
           );
