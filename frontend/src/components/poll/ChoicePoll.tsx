@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Poll, PollOption } from "@/api/types";
+import UserAvatar from "@/components/UserAvatar";
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -171,27 +173,17 @@ function AddOption({
   );
 }
 
-/** Overlapping initials chips. */
+/** Overlapping initials avatars with names on hover. */
 export function AvatarRow({ voters, max = 4 }: { voters: { id: string; display_name: string }[]; max?: number }) {
   if (voters.length === 0) return null;
   const shown = voters.slice(0, max);
   const extra = voters.length - shown.length;
   return (
-    <span className="flex -space-x-1.5">
+    <AvatarGroup>
       {shown.map((v) => (
-        <span
-          key={v.id}
-          title={v.display_name}
-          className="flex size-5 items-center justify-center rounded-full bg-primary/15 text-primary ring-2 ring-background text-[10px] font-semibold uppercase"
-        >
-          {v.display_name.slice(0, 1)}
-        </span>
+        <UserAvatar key={v.id} name={v.display_name} className="size-5" textClassName="text-[10px]" />
       ))}
-      {extra > 0 && (
-        <span className="flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background text-[10px] font-medium">
-          +{extra}
-        </span>
-      )}
-    </span>
+      {extra > 0 && <AvatarGroupCount className="size-5 text-[10px]">+{extra}</AvatarGroupCount>}
+    </AvatarGroup>
   );
 }

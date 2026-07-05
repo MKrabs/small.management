@@ -1,5 +1,11 @@
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
+import { Separator } from "@/components/ui/separator";
 import type { Cycle, FeedItem, Log } from "@/api/types";
 import PollCard from "./PollCard";
 import EventCard from "./EventCard";
@@ -35,9 +41,11 @@ export default function ActivityFeed({ items, activityId, memberCount }: Props) 
 
   if (items.length === 0) {
     return (
-      <div className="py-16 text-center text-muted-foreground text-sm">
-        Nothing here yet. Use the + button to get started.
-      </div>
+      <Empty className="py-16">
+        <EmptyHeader>
+          <EmptyDescription>Nothing here yet. Use the + button to get started.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -84,27 +92,25 @@ function CycleFold({
   activityId: string;
   memberCount?: number;
 }) {
-  const [open, setOpen] = useState(false);
   const marker = seg.marker!;
   const started = new Date(marker.created_at).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
   return (
-    <div className="flex flex-col gap-3">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border-t pt-3"
-      >
-        <ChevronRight className={`size-4 transition-transform ${open ? "rotate-90" : ""}`} />
+    <Collapsible className="flex flex-col gap-3">
+      <Separator />
+      <CollapsibleTrigger className="group flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
         <span className="font-medium">{marker.name}</span>
         <span>· {started}</span>
-      </button>
-      {open &&
-        (seg.items.length > 0 ? (
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-col gap-3">
+        {seg.items.length > 0 ? (
           <Cards items={seg.items} activityId={activityId} memberCount={memberCount} />
         ) : (
           <p className="text-xs text-muted-foreground pl-6">Nothing happened in this round.</p>
-        ))}
-    </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
