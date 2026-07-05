@@ -1,30 +1,55 @@
-import { Link } from "react-router-dom";
-import type { Poll } from "@/api/types";
+import { useNavigate } from "react-router-dom";
+import type { Poll, PollKind } from "@/api/types";
+import ChoicePoll from "@/components/poll/ChoicePoll";
+import DatePoll from "@/components/poll/DatePoll";
+import RangePoll from "@/components/poll/RangePoll";
+import CommentPreview from "./CommentPreview";
 import { timeAgo } from "@/lib/utils";
 
 type Props = { poll: Poll; activityId: string; memberCount?: number };
 
-export default function PollCard({ poll, memberCount }: Props) {
+const KIND_LABEL: Record<PollKind, string> = {
+  choice: "Poll",
+  date: "Day poll",
+  datetime: "Day & time poll",
+  range: "Date range poll",
+};
+
+/**
+ * Interactive feed card: choice/date/range polls take votes right on the card;
+ * datetime polls (and everything else) open the dedicated page.
+ */
+export default function PollCard({ poll, activityId, memberCount }: Props) {
+  const navigate = useNavigate();
   const deleted = !!poll.deleted_at;
+  const open = () => navigate(`poll/${poll.id}`);
 
   return (
-    <Link
-      to={`poll/${poll.id}`}
-      className={`block border rounded-lg p-4 hover:bg-muted/50 transition-colors ${deleted ? "opacity-40" : ""}`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Poll</span>
-          <h3 className={`font-medium ${deleted ? "line-through" : ""}`}>{poll.title}</h3>
+    <div className={`border rounded-lg p-4 flex flex-col gap-3 ${deleted ? "opacity-40" : ""}`}>
+      <button onClick={open} className="text-left hover:opacity-80 transition-opacity">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">{KIND_LABEL[poll.kind]}</span>
+            <h3 className={`font-medium ${deleted ? "line-through" : ""}`}>{poll.title}</h3>
+          </div>
+          {poll.kind === "datetime" && poll.my_vote && <MyVoteStatus my={poll.my_vote} />}
         </div>
-        {poll.my_vote && <MyVoteStatus my={poll.my_vote} />}
-      </div>
-      <p className="text-xs text-muted-foreground mt-1">
-        {poll.voter_count}
-        {memberCount ? ` of ${memberCount}` : ""} shared availability · by{" "}
-        {poll.created_by?.display_name ?? "someone"} · {timeAgo(poll.created_at)}
-      </p>
-    </Link>
+        <p className="text-xs text-muted-foreground mt-1">
+          {poll.voter_count}
+          {memberCount ? ` of ${memberCount}` : ""} voted · by{" "}
+          {poll.created_by?.display_name ?? "someone"} · {timeAgo(poll.created_at)}
+        </p>
+      </button>
+
+      {poll.kind === "choice" && !deleted && <ChoicePoll poll={poll} activityId={activityId} />}
+      {poll.kind === "date" && !deleted && <DatePoll poll={poll} activityId={activityId} slots={poll.slots ?? []} />}
+      {poll.kind === "range" && !deleted && <RangePoll poll={poll} activityId={activityId} slots={poll.slots ?? []} />}
+      {/* datetime stays page-only by design */}
+
+      <button onClick={open} className="text-left">
+        <CommentPreview comments={poll.latest_comments} total={poll.comment_count} />
+      </button>
+    </div>
   );
 }
 

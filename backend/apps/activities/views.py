@@ -101,7 +101,6 @@ class JoinActivityView(ActivityMixin, APIView):
 class FeedView(ActivityMixin, APIView):
     def get(self, request, activity_id):
         from apps.polls.serializers import PollSerializer
-        from apps.proposals.serializers import ProposalSerializer
         from apps.events.serializers import EventSerializer
 
         activity = self.get_activity()
@@ -116,14 +115,11 @@ class FeedView(ActivityMixin, APIView):
         for obj in activity.polls.select_related("created_by").all():
             items.append({"type": "poll", "created_at": obj.created_at, "data": PollSerializer(obj, context={"member": member}).data})
 
-        for obj in activity.proposals.select_related("created_by").prefetch_related("votes__member").all():
-            items.append({"type": "proposal", "created_at": obj.created_at, "data": ProposalSerializer(obj).data})
-
         for obj in activity.events.select_related("created_by").prefetch_related("rsvps__member").all():
             items.append({"type": "event", "created_at": obj.created_at, "data": EventSerializer(obj).data})
 
         # standalone comments only — card-attached ones live on their card's page
-        for obj in activity.comments.filter(parent=None, poll=None, proposal=None, event=None).select_related("member").all():
+        for obj in activity.comments.filter(parent=None, poll=None, event=None).select_related("member").all():
             items.append({"type": "comment", "created_at": obj.created_at, "data": CommentSerializer(obj).data})
 
         if include_logs:
@@ -182,18 +178,16 @@ class CommentListCreateView(ActivityMixin, APIView):
         if parent_id:
             qs = self.get_activity().comments.filter(parent_id=parent_id).select_related("member")
             return Response(CommentSerializer(qs, many=True).data)
-        qs = self.get_activity().comments.filter(parent=None).select_related("member")
+        qs = self.get_activity().comments.select_related("member")
         poll_id = request.query_params.get("poll")
-        proposal_id = request.query_params.get("proposal")
         event_id = request.query_params.get("event")
+        # target queries return the whole tree; the client nests by parent_id
         if poll_id:
             qs = qs.filter(poll_id=poll_id)
-        elif proposal_id:
-            qs = qs.filter(proposal_id=proposal_id)
         elif event_id:
             qs = qs.filter(event_id=event_id)
         else:
-            qs = qs.filter(poll=None, proposal=None, event=None)
+            qs = qs.filter(parent=None, poll=None, event=None)
         return Response(CommentSerializer(qs, many=True).data)
 
     def post(self, request, activity_id):
@@ -202,14 +196,17 @@ class CommentListCreateView(ActivityMixin, APIView):
         body = (request.data.get("body") or "").strip()
         if not body:
             return Response({"body": ["This field is required"]}, status=400)
+        parent = None
+        if request.data.get("parent"):
+            parent = get_object_or_404(Comment, id=request.data["parent"], activity=activity)
         comment = Comment.objects.create(
             activity=activity,
             member=member,
             body=body,
-            parent_id=request.data.get("parent"),
-            poll_id=request.data.get("poll"),
-            proposal_id=request.data.get("proposal"),
-            event_id=request.data.get("event"),
+            parent=parent,
+            # replies inherit their parent's target so one query fetches a whole tree
+            poll_id=parent.poll_id if parent else request.data.get("poll"),
+            event_id=parent.event_id if parent else request.data.get("event"),
         )
         Log.record(activity, member, "created_comment")
         return Response(CommentSerializer(comment).data, status=201)

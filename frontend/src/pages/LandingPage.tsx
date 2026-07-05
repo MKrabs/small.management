@@ -113,7 +113,7 @@ function MarketingHome() {
             <p className="text-muted-foreground text-lg leading-relaxed">
               <strong className="text-foreground font-bold">Plan events</strong>{" "}
               with your people.{" "}
-              <Squiggle>Polls, proposals and decisions</Squiggle> — no accounts
+              <Squiggle>Polls, dates and decisions</Squiggle> — no accounts
               required, nothing tracked.
             </p>
           </div>
@@ -296,11 +296,11 @@ function DemoProposal() {
       <div className="flex items-start justify-between gap-2">
         <div>
           <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Proposal
+            Poll
           </span>
-          <h3 className="font-medium">Saturday, Aug 9</h3>
+          <h3 className="font-medium">Saturday, Aug 9?</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            proposed by Jordan · from poll results
+            suggested by Jordan · from the calendar votes
           </p>
         </div>
         <div className="flex gap-2 text-xs shrink-0 mt-1">

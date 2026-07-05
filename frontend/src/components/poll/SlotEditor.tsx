@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, MessageSquare, Plus, X } from "lucide-react";
+import { MessageSquare, Plus, X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Slot } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import MonthGrid from "./MonthGrid";
 import { STATUS_CHIP, type VoteStatus } from "@/lib/status";
 import { cn, formatTime, parseLocalDate } from "@/lib/utils";
 
@@ -33,10 +34,6 @@ const STATUS_DOT: Record<VoteStatus, string> = {
 };
 
 let localKey = 0;
-
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 export default function SlotEditor({ activityId, pollId, mySlots, onClose }: Props) {
   const api = useApi();
@@ -137,7 +134,24 @@ export default function SlotEditor({ activityId, pollId, mySlots, onClose }: Pro
           </Button>
         </div>
 
-        <Calendar month={month} setMonth={setMonth} byDate={byDate} onTapDay={toggleDay} />
+        <MonthGrid
+          month={month}
+          onMonthChange={setMonth}
+          onTap={toggleDay}
+          dayCell={(dateStr) => {
+            const statuses = [...new Set((byDate.get(dateStr) ?? []).map((e) => e.status))];
+            return {
+              className: statuses.length > 0 ? "bg-muted font-medium" : undefined,
+              content: (
+                <span className="flex gap-0.5 h-1.5 mt-0.5">
+                  {statuses.map((s) => (
+                    <span key={s} className={cn("size-1.5 rounded-full", STATUS_DOT[s])} />
+                  ))}
+                </span>
+              ),
+            };
+          }}
+        />
 
         <div className="flex flex-col gap-3">
           {dates.length === 0 && (
@@ -181,96 +195,6 @@ function newEntry(dateStr: string): Entry {
     note: "",
     showNote: false,
   };
-}
-
-// ─── Calendar ────────────────────────────────────────────────────────────────
-
-function Calendar({
-  month,
-  setMonth,
-  byDate,
-  onTapDay,
-}: {
-  month: Date;
-  setMonth: (d: Date) => void;
-  byDate: Map<string, Entry[]>;
-  onTapDay: (date: string) => void;
-}) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const canGoBack = month > currentMonth;
-
-  // Monday-first grid
-  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
-  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const leadingBlanks = (firstDay.getDay() + 6) % 7;
-
-  const cells: (Date | null)[] = [
-    ...Array.from({ length: leadingBlanks }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => new Date(month.getFullYear(), month.getMonth(), i + 1)),
-  ];
-
-  return (
-    <div className="border rounded-lg p-3">
-      <div className="flex items-center justify-between mb-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          disabled={!canGoBack}
-          onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-          aria-label="Previous month"
-        >
-          <ChevronLeft />
-        </Button>
-        <span className="text-sm font-medium">
-          {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-          aria-label="Next month"
-        >
-          <ChevronRight />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-7 text-center text-xs text-muted-foreground mb-1">
-        {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-          <span key={d} className="py-1">{d}</span>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-y-1">
-        {cells.map((d, i) => {
-          if (!d) return <span key={`blank-${i}`} />;
-          const dateStr = toDateStr(d);
-          const past = d < today;
-          const statuses = [...new Set((byDate.get(dateStr) ?? []).map((e) => e.status))];
-          return (
-            <button
-              key={dateStr}
-              disabled={past}
-              onClick={() => onTapDay(dateStr)}
-              className={cn(
-                "relative h-11 rounded-md text-sm flex flex-col items-center justify-center transition-colors",
-                past ? "text-muted-foreground/40" : "hover:bg-muted",
-                statuses.length > 0 && "bg-muted font-medium",
-              )}
-            >
-              {d.getDate()}
-              <span className="flex gap-0.5 h-1.5 mt-0.5">
-                {statuses.map((s) => (
-                  <span key={s} className={cn("size-1.5 rounded-full", STATUS_DOT[s])} />
-                ))}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 // ─── Day entry card ──────────────────────────────────────────────────────────

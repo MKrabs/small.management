@@ -12,7 +12,6 @@ activity_patterns = [
     path("comments/", views.CommentListCreateView.as_view()),
     path("comments/<int:pk>/", views.CommentDetailView.as_view()),
     path("", include("apps.polls.urls")),
-    path("", include("apps.proposals.urls")),
     path("", include("apps.events.urls")),
 ]
 

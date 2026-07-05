@@ -5,7 +5,7 @@ from apps.choices import RSVPStatus
 class Event(models.Model):
     activity = models.ForeignKey("activities.Activity", on_delete=models.CASCADE, related_name="events")
     cycle = models.ForeignKey("activities.Cycle", on_delete=models.SET_NULL, null=True, blank=True, related_name="events")
-    proposal = models.ForeignKey("proposals.Proposal", on_delete=models.SET_NULL, null=True, blank=True)
+    poll = models.ForeignKey("polls.Poll", on_delete=models.SET_NULL, null=True, blank=True, related_name="events")
     date = models.DateField()
     time_start = models.TimeField(null=True, blank=True)
     time_end = models.TimeField(null=True, blank=True)

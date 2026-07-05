@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { Cycle, FeedItem, Log } from "@/api/types";
 import PollCard from "./PollCard";
-import ProposalCard from "./ProposalCard";
 import EventCard from "./EventCard";
 import CommentCard from "./CommentCard";
 import { timeAgo } from "@/lib/utils";
@@ -62,8 +61,6 @@ function Cards({ items, activityId, memberCount }: { items: FeedItem[]; activity
         switch (item.type) {
           case "poll":
             return <PollCard key={`poll-${item.data.id}`} poll={item.data} activityId={activityId} memberCount={memberCount} />;
-          case "proposal":
-            return <ProposalCard key={`proposal-${item.data.id}`} proposal={item.data} activityId={activityId} />;
           case "event":
             return <EventCard key={`event-${item.data.id}`} event={item.data} activityId={activityId} />;
           case "comment":
@@ -120,8 +117,11 @@ function logText(log: Log): string {
     case "renamed_activity": return `renamed the activity to “${d.title}”`;
     case "member_joined": return "joined";
     case "created_poll": return `created poll “${d.title}”`;
-    case "voted": return "shared availability";
+    case "voted": return "voted";
     case "retracted_vote": return "retracted a vote";
+    case "added_option": return `added option “${d.label}”`;
+    case "finalized_poll": return `finalized ${d.date} as event`;
+    // legacy log lines from before proposals were folded into polls
     case "created_proposal": return `proposed ${d.date}`;
     case "voted_proposal": return `voted ${d.status} on a proposal`;
     case "finalized_proposal": return "set a proposal as event";

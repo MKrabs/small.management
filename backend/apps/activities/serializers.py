@@ -75,6 +75,6 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = [
             "id", "member", "body", "parent_id",
-            "poll_id", "proposal_id", "event_id",
+            "poll_id", "event_id",
             "reply_count", "created_at", "deleted_at",
         ]

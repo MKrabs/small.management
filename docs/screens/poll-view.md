@@ -1,11 +1,11 @@
 ---
 type: Screen Spec
-description: Where a member shares their own availability and sees the group's collective picture.
+description: Dedicated page for one decision - full voting UI, results, and the threaded comment tree.
 ---
 
 # Screen: Poll View
 
-Where a member shares their own availability and sees the group's collective picture.
+Dedicated page for one decision. Reached by tapping its feed card. Shows the full voting UI, the results, and the complete comment tree.
 
 ## Layout
 
@@ -13,54 +13,39 @@ Where a member shares their own availability and sees the group's collective pic
 ┌─────────────────────────────┐
 │  Poll header                │
 ├─────────────────────────────┤
-│  Group heatmap              │
-├─────────────────────────────┤
-│  Your availability          │
-│  [ slot ] [ slot ] [ + ]    │
+│  Voting UI (per kind)       │
 ├─────────────────────────────┤
 │  Per-member breakdown       │
-│  (expandable)               │
+│  (date-based kinds,         │
+│   expandable)               │
 ├─────────────────────────────┤
-│  Comments (collapsed)       │
+│  Comments (full tree)       │
 └─────────────────────────────┘
-     [ Create Proposal ]  ← sticky bottom
+   [ Finalize into event ]  ← sticky bottom
 ```
 
 ## Poll Header
 
-- Poll title / question
+- Kind label + poll title / question
 - Created by · timestamp
-- "X of Y members have shared availability"
+- "X of Y members have voted"
+- Delete (soft) in the corner
 
-## Group Heatmap
+## Voting UI per Kind
 
-Aggregated view of all day/time-specific votes. Darker = more people available.
-
-- Days as columns, time as rows if time data exists
-- Raw vote counts per cell — no "of X total" framing
-- General yes/no voters are not shown on the heatmap
-- Tapping a cell shows who voted for that slot
-
-## Your Availability
-
-Your submitted slots listed as chips or rows:
-
-```
-✓ Friday · 10h–12h · "free after lunch"
-~ Friday · 17h–19h30
-✗ Friday · before 17h · "school"
-```
-
-`+` opens the slot editor. Existing slots can be tapped to edit or retract.
+- **Choice** — same interactive UI as the feed card: two big buttons (2 options) or bar rows (3+), voter avatars, add-option.
+- **Date** — drag/tap calendar (same as the card), plus per-member breakdown below.
+- **Range** — drag calendar with own-range pills and endpoint moving (same as the card), plus breakdown.
+- **Date+time** — group heatmap, "Your availability" slot list, and the slot editor. This kind has no feed-card voting; the page is the only place to vote.
 
 ## Per-member Breakdown
 
-Collapsed by default ("See individual responses"). Expands to show each member's slots. Useful for reading the room before creating a proposal.
+Collapsed by default ("See individual responses"). Expands to show each member's votes. Useful for reading the room before finalizing.
 
 ## Comments
 
-Collapsed by default. Threaded replies. Same mechanic as standalone comment cards.
+Full Reddit-style tree, open by default: nested replies with indent, collapse per branch, reply and delete inline. The feed card only previews the latest 3 top-level comments; this page is where members actually comment.
 
 ## Sticky Bottom
 
-- **Create Proposal** — any member, any time, no threshold required
+- **Finalize into event** — any member, any time, no threshold. Opens a sheet: date (required), time range and note (optional) → creates the Event and navigates to it.
