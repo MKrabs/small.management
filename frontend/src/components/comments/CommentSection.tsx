@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import type { Comment } from "@/api/types";
+import ConfirmDelete from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { timeAgo } from "@/lib/utils";
@@ -86,12 +88,12 @@ function CommentNode({
             <button className="hover:text-foreground" onClick={() => setReplying((v) => !v)}>
               Reply
             </button>
-            <button
-              className="hover:text-destructive"
-              onClick={() => window.confirm("Delete this comment for everyone?") && deleteMut.mutate()}
-            >
-              Delete
-            </button>
+            <ConfirmDelete
+              title="Delete this comment?"
+              description="It's deleted for everyone. Replies stay."
+              onConfirm={() => deleteMut.mutate()}
+              trigger={<button className="hover:text-destructive">Delete</button>}
+            />
           </>
         )}
         {children.length > 0 && (
@@ -149,6 +151,7 @@ function Composer({
       qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onDone?.();
     },
+    onError: () => toast.error("Couldn't post your comment — try again."),
   });
 
   return (

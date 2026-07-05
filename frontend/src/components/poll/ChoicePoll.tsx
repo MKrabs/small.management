@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Poll, PollOption } from "@/api/types";
@@ -27,6 +28,7 @@ export default function ChoicePoll({ poll, activityId }: Props) {
         ? api.del<Poll>(`/activities/${activityId}/polls/${poll.id}/options/${opt.id}/vote/`, activityId)
         : api.put<Poll>(`/activities/${activityId}/polls/${poll.id}/options/${opt.id}/vote/`, {}, activityId),
     onSuccess: refresh,
+    onError: () => toast.error("Couldn't save your vote — try again."),
   });
 
   if (options.length === 2) {
@@ -134,6 +136,7 @@ function AddOption({
       setEditing(false);
       onAdded({ ...poll, options: [...(poll.options ?? []), opt] });
     },
+    onError: () => toast.error("Couldn't add the option — try again."),
   });
 
   if (disabled) return null;

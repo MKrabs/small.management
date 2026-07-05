@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
@@ -58,6 +59,7 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
     qc.invalidateQueries({ queryKey: ["slots", activityId, String(poll.id)] });
     qc.invalidateQueries({ queryKey: ["poll", activityId, String(poll.id)] });
   };
+  const saveFailed = () => toast.error("Couldn't save your vote — try again.");
 
   const createMut = useMutation({
     mutationFn: (days: string[]) =>
@@ -67,18 +69,21 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
         activityId,
       ),
     onSettled: invalidate,
+    onError: saveFailed,
   });
 
   const moveMut = useMutation({
     mutationFn: ({ slotId, date, date_end }: { slotId: number; date: string; date_end: string }) =>
       api.patch(`/activities/${activityId}/polls/${poll.id}/slots/${slotId}/`, { date, date_end }, activityId),
     onSettled: invalidate,
+    onError: saveFailed,
   });
 
   const deleteMut = useMutation({
     mutationFn: (slotId: number) =>
       api.del(`/activities/${activityId}/polls/${poll.id}/slots/${slotId}/`, activityId),
     onSettled: invalidate,
+    onError: saveFailed,
   });
 
   const tap = (day: string) => {

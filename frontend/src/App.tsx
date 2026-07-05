@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
 import Nav from "@/components/layout/Nav";
 import DotGridBackground from "@/components/DotGridBackground";
 import LandingPage from "@/pages/LandingPage";
@@ -13,6 +14,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <DotGridBackground />
+      <Toaster />
       <Nav />
       <Routes>
         <Route path="/" element={<LandingPage />} />
