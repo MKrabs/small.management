@@ -72,6 +72,15 @@ class ActivityDetailView(ActivityMixin, APIView):
             activity.archived_at = timezone.now() if archived else None
             activity.save()
             Log.record(activity, member, "archived" if archived else "unarchived", target="activity")
+        if "pin" in request.data:
+            raw_pin = (request.data.get("pin") or "").strip()
+            if raw_pin:
+                activity.set_pin(raw_pin)
+            else:
+                activity.pin_hash = None
+                activity.pin = None
+            activity.save()
+            Log.record(activity, member, "changed_pin")
         return Response(self._serialize(activity).data)
 
 
@@ -143,6 +152,57 @@ class MemberListView(ActivityMixin, APIView):
         self.get_member()
         members = self.get_activity().members.all()
         return Response(MemberSerializer(members, many=True).data)
+
+
+class MemberClaimView(ActivityMixin, APIView):
+    """Merge a guest ("zombie") member's votes and actions into the caller, then delete it.
+    Where both members acted on the same thing, the caller's own vote wins."""
+
+    @transaction.atomic
+    def post(self, request, activity_id, pk):
+        from apps.polls.models import Poll, Option, OptionVote, Slot
+        from apps.events.models import Event, RSVP
+
+        activity = self.get_activity()
+        me = self.get_member()
+        zombie = get_object_or_404(Member, id=pk, activity=activity)
+        if zombie.id == me.id:
+            return Response({"detail": "You can't claim yourself"}, status=400)
+        if zombie.user_id is not None:
+            return Response({"detail": "Only guest members can be claimed"}, status=400)
+
+        # choice votes: unique per (option, member) — drop the zombie's where I already voted
+        OptionVote.objects.filter(member=zombie, option__votes__member=me).delete()
+        OptionVote.objects.filter(member=zombie).update(member=me)
+
+        # slots: drop the zombie's where I have the same poll/date/range/time, keep mine
+        for slot in Slot.objects.filter(member=zombie):
+            overlap = Slot.objects.filter(
+                member=me, poll_id=slot.poll_id, date=slot.date, date_end=slot.date_end,
+                time_start=slot.time_start, time_end=slot.time_end,
+            ).exists()
+            if overlap:
+                slot.delete()
+            else:
+                slot.member = me
+                slot.save()
+
+        # RSVPs: unique per (event, member) — keep mine on conflict
+        RSVP.objects.filter(member=zombie, event__rsvps__member=me).delete()
+        RSVP.objects.filter(member=zombie).update(member=me)
+
+        # authored content and history follow along
+        Comment.objects.filter(member=zombie).update(member=me)
+        Log.objects.filter(member=zombie).update(member=me)
+        Poll.objects.filter(created_by=zombie).update(created_by=me)
+        Option.objects.filter(created_by=zombie).update(created_by=me)
+        Event.objects.filter(created_by=zombie).update(created_by=me)
+        Cycle.objects.filter(created_by=zombie).update(created_by=me)
+
+        name = zombie.display_name
+        zombie.delete()
+        Log.record(activity, me, "claimed_member", display_name=name)
+        return Response(status=204)
 
 
 class LogListView(ActivityMixin, APIView):

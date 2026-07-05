@@ -10,7 +10,7 @@ export default function CommentCard({ comment }: Props) {
   return (
     <div
       className={cn(
-        "border rounded-lg p-4 flex flex-col gap-1",
+        "bg-card shadow-md rounded-lg p-4 flex flex-col gap-1",
         archived && "opacity-40",
         warning && "bg-yellow-500/10",
       )}

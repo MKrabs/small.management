@@ -12,6 +12,7 @@ class Event(models.Model):
     note = models.TextField(blank=True)
     created_by = models.ForeignKey("activities.Member", on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Event {self.date} ({self.activity})"

@@ -75,51 +75,47 @@ export default function PollPage() {
           {/* Header */}
           <div>
             <div className="flex items-start justify-between gap-2">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+              <span className="my-auto text-xs text-muted-foreground uppercase tracking-wide">
                 Poll{pollQ.data.deleted_at && " · archived"}
                 {!pollQ.data.deleted_at && pollQ.data.locked_at && " · voting finished"}
+                {activity &&
+                  ` · ${kind === "choice" ? pollQ.data.voter_count : respondedCount} of ${activity.member_count} member${activity.member_count !== 1 ? "s" : ""} voted`}
               </span>
-              {pollQ.data.deleted_at ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={() => archiveMut.mutate(false)}
-                >
-                  <ArchiveRestore data-icon="inline-start" />
-                  Unarchive
-                </Button>
-              ) : (
-                <ConfirmDelete
-                  title="Archive this poll?"
-                  actionLabel="Archive"
-                  description="It's archived for everyone but stays visible, struck through. You can unarchive it anytime."
-                  onConfirm={() => archiveMut.mutate(true)}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="text-muted-foreground"
-                      aria-label="Archive poll"
-                    >
-                      <Archive />
-                    </Button>
-                  }
-                />
-              )}
+              <span className="flex items-center gap-1 shrink-0 text-xs text-muted-foreground">
+                by {pollQ.data.created_by?.display_name ?? "someone"} · {timeAgo(pollQ.data.created_at)}
+                {pollQ.data.deleted_at ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => archiveMut.mutate(false)}
+                  >
+                    <ArchiveRestore data-icon="inline-start" />
+                    Unarchive
+                  </Button>
+                ) : (
+                  <ConfirmDelete
+                    title="Archive this poll?"
+                    actionLabel="Archive"
+                    description="It's archived for everyone but stays visible, struck through. You can unarchive it anytime."
+                    onConfirm={() => archiveMut.mutate(true)}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground"
+                        aria-label="Archive poll"
+                      >
+                        <Archive />
+                      </Button>
+                    }
+                  />
+                )}
+              </span>
             </div>
             <h1 className={`text-2xl font-semibold ${pollQ.data.deleted_at ? "line-through opacity-40" : ""}`}>
               {pollQ.data.title}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              by {pollQ.data.created_by?.display_name ?? "someone"} · {timeAgo(pollQ.data.created_at)}
-            </p>
-            {activity && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {kind === "choice" ? pollQ.data.voter_count : respondedCount} of {activity.member_count} member
-                {activity.member_count !== 1 ? "s" : ""} have voted
-              </p>
-            )}
           </div>
 
           {kind === "choice" && <ChoicePoll poll={pollQ.data} activityId={id} />}
@@ -186,7 +182,7 @@ export default function PollPage() {
           ) : (
             <Button className="flex-1" size="lg" disabled={lockMut.isPending} onClick={() => lockMut.mutate(true)}>
               <Lock data-icon="inline-start" />
-              Finish voting
+              Close voting for everyone
             </Button>
           )}
         </StickyBar>

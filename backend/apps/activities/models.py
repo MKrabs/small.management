@@ -18,6 +18,8 @@ class Activity(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=40)
     pin_hash = models.CharField(max_length=128, null=True, blank=True)
+    # plaintext copy so members can view/share the PIN — it's a casual join code, not a credential
+    pin = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     archived_at = models.DateTimeField(null=True, blank=True)
 
@@ -33,6 +35,7 @@ class Activity(models.Model):
 
     def set_pin(self, raw_pin):
         self.pin_hash = make_password(raw_pin)
+        self.pin = raw_pin
 
     def check_pin(self, raw_pin):
         return check_password(raw_pin, self.pin_hash)

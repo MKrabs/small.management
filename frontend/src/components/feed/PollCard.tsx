@@ -25,23 +25,22 @@ export default function PollCard({ poll, activityId, memberCount }: Props) {
   const open = () => navigate(`poll/${poll.id}`);
 
   return (
-    <div className={`border rounded-lg p-4 flex flex-col gap-3 ${deleted ? "opacity-40" : ""}`}>
+    <div className={`bg-card shadow-md rounded-lg p-4 flex flex-col gap-3 ${deleted ? "opacity-40" : ""}`}>
       <button onClick={open} className="text-left hover:opacity-80 transition-opacity">
+        <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+          <span className="uppercase tracking-wide">
+            {KIND_LABEL[poll.kind]}
+            {!deleted && poll.locked_at && " · voting finished"}
+            {" · "}{poll.voter_count}{memberCount ? ` of ${memberCount}` : ""} voted
+          </span>
+          <span className="shrink-0">
+            by {poll.created_by?.display_name ?? "someone"} · {timeAgo(poll.created_at)}
+          </span>
+        </div>
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">
-              {KIND_LABEL[poll.kind]}
-              {!deleted && poll.locked_at && " · voting finished"}
-            </span>
-            <h3 className={`font-medium ${deleted ? "line-through" : ""}`}>{poll.title}</h3>
-          </div>
+          <h3 className={`font-medium ${deleted ? "line-through" : ""}`}>{poll.title}</h3>
           {poll.kind === "datetime" && poll.my_vote && <MyVoteStatus my={poll.my_vote} />}
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {poll.voter_count}
-          {memberCount ? ` of ${memberCount}` : ""} voted · by{" "}
-          {poll.created_by?.display_name ?? "someone"} · {timeAgo(poll.created_at)}
-        </p>
       </button>
 
       {poll.kind === "choice" && !deleted && <ChoicePoll poll={poll} activityId={activityId} />}

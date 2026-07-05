@@ -17,6 +17,8 @@ export type Activity = {
   title: string;
   slug: string;
   has_pin: boolean;
+  /** Plaintext PIN — members only, null for outsiders or pre-plaintext PINs. */
+  pin: string | null;
   member_count: number;
   is_member: boolean;
   me: Member | null;
@@ -120,6 +122,7 @@ export type Event = {
   created_by: Member | null;
   rsvps: RSVP[];
   created_at: string;
+  deleted_at: string | null;
 };
 
 export type FeedItem =

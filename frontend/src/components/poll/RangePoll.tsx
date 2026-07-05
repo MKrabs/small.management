@@ -117,23 +117,25 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
         onDragEnd={disabled || active ? undefined : (days) => !busy && createMut.mutate(days)}
         dayCell={(day) => {
           const mine = myDays.has(day);
+          // the drag preview renders as a unified range pill, same as a saved range
+          const inPreview = previewSet.has(day);
+          const filled = mine || inPreview;
           const voters = countByDay.get(day)?.size ?? 0;
           const others = voters - (mine ? 1 : 0);
           const top = maxVoters >= 2 && voters === maxVoters;
           return {
             className: cn(
-              mine && "bg-primary text-primary-foreground font-medium hover:bg-primary/90",
-              // join my range into a pill: square off sides that continue
-              mine && myDays.has(prevDay(day)) && "rounded-l-none",
-              mine && myDays.has(nextDay(day)) && "rounded-r-none",
-              !mine && others > 0 && (others >= 3 ? "bg-primary/25" : "bg-primary/10"),
-              previewSet.has(day) && "ring-2 ring-primary ring-inset",
+              filled && "bg-primary text-primary-foreground font-medium hover:bg-primary/90",
+              // join the range into a pill: square off sides that continue
+              ((mine && myDays.has(prevDay(day))) || (inPreview && previewSet.has(prevDay(day)))) && "rounded-l-none",
+              ((mine && myDays.has(nextDay(day))) || (inPreview && previewSet.has(nextDay(day)))) && "rounded-r-none",
+              !filled && others > 0 && (others >= 3 ? "bg-primary/25" : "bg-primary/10"),
             ),
             content: (
               <>
-                {top && <Crown className={cn("absolute top-0.5 right-1 h-2.5 w-3.5", mine ? "text-primary-foreground" : "text-amber-500")} />}
+                {top && <Crown className={cn("absolute top-0.5 right-1 h-2.5 w-3.5", filled ? "text-primary-foreground" : "text-amber-500")} />}
                 {voters > 0 && (
-                  <span className={cn("text-[9px] leading-none mt-0.5", mine ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                  <span className={cn("text-[9px] leading-none mt-0.5", filled ? "text-primary-foreground/80" : "text-muted-foreground")}>
                     {voters}
                   </span>
                 )}
@@ -156,6 +158,7 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
                 <>
                   <span className="text-muted-foreground">–</span>
                   <EndpointButton slot={s} which="date_end" active={active} onToggle={setActive} />
+                  <span className="text-muted-foreground">({datesBetween(s.date!, s.date_end!).length} days)</span>
                 </>
               )}
               <button
@@ -202,7 +205,7 @@ function EndpointButton({
   onToggle: (e: Endpoint | null) => void;
 }) {
   const isActive = active?.slotId === slot.id && active.which === which;
-  const label = parseLocalDate(slot[which]!).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  const label = parseLocalDate(slot[which]!).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
   return (
     <button
       className={cn(

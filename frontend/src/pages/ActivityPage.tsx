@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, MessageSquare, RefreshCw } from "lucide-react";
+import { BarChart3, CalendarPlus, MessageSquare, RefreshCw } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, FeedItem, Member } from "@/api/types";
@@ -13,10 +13,11 @@ import BottomSheet from "@/components/layout/BottomSheet";
 import CreatePollSheet from "@/components/sheets/CreatePollSheet";
 import CreateCommentSheet from "@/components/sheets/CreateCommentSheet";
 import NewCycleSheet from "@/components/sheets/NewCycleSheet";
+import CreateEventSheet from "@/components/sheets/CreateEventSheet";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 
-type SheetKind = "menu" | "poll" | "comment" | "cycle" | null;
+type SheetKind = "menu" | "poll" | "comment" | "cycle" | "event" | null;
 
 export default function ActivityPage() {
   const { id = "", slug = "" } = useParams();
@@ -84,6 +85,12 @@ export default function ActivityPage() {
               onClick={() => setSheet("poll")}
             />
             <MenuAction
+              icon={<CalendarPlus className="size-5" />}
+              title="Post an event"
+              hint="A fixed date, no vote needed"
+              onClick={() => setSheet("event")}
+            />
+            <MenuAction
               icon={<MessageSquare className="size-5" />}
               title="New comment"
               hint="Say something to the group"
@@ -107,6 +114,13 @@ export default function ActivityPage() {
             qc.invalidateQueries({ queryKey: ["feed", id] });
             navigate(`/activity/${id}/${slug}/poll/${p.id}`);
           }}
+        />
+      )}
+      {sheet === "event" && (
+        <CreateEventSheet
+          activityId={id}
+          onClose={() => setSheet(null)}
+          onCreated={() => setSheet(null)}
         />
       )}
       {sheet === "comment" && (

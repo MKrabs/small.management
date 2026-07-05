@@ -4,8 +4,10 @@ import { Archive, ArchiveRestore, Check, Copy, Users } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Activity, Member } from "@/api/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import BottomSheet from "@/components/layout/BottomSheet";
 import ConfirmDelete from "@/components/ConfirmDelete";
+import UserAvatar from "@/components/UserAvatar";
 import { timeAgo } from "@/lib/utils";
 
 type Props = {
@@ -19,6 +21,7 @@ export default function ActivityHeader({ activity, activityId, showLog, onToggle
   const api = useApi();
   const qc = useQueryClient();
   const [membersOpen, setMembersOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const membersQ = useQuery({
@@ -49,7 +52,12 @@ export default function ActivityHeader({ activity, activityId, showLog, onToggle
           <span className="text-xs text-muted-foreground border rounded px-1.5 py-0.5 mr-1">Archived</span>
         )}
         {activity.has_pin && (
-          <span className="text-xs text-muted-foreground border rounded px-1.5 py-0.5 mr-1">PIN</span>
+          <button
+            className="text-xs text-muted-foreground border rounded px-1.5 py-0.5 mr-1 hover:bg-muted transition-colors"
+            onClick={() => setPinOpen(true)}
+          >
+            PIN
+          </button>
         )}
         {activity.archived_at ? (
           <Button
@@ -89,20 +97,152 @@ export default function ActivityHeader({ activity, activityId, showLog, onToggle
 
     {/* outside <header>: its backdrop-blur would trap position:fixed descendants */}
     {membersOpen && (
-      <BottomSheet onClose={() => setMembersOpen(false)} title="Members">
+      <MembersSheet
+        activity={activity}
+        activityId={activityId}
+        members={membersQ.data ?? []}
+        onClose={() => setMembersOpen(false)}
+      />
+    )}
+    {pinOpen && <PinSheet activity={activity} activityId={activityId} onClose={() => setPinOpen(false)} />}
+    </>
+  );
+}
+
+function MembersSheet({
+  activity,
+  activityId,
+  members,
+  onClose,
+}: {
+  activity: Activity;
+  activityId: string;
+  members: Member[];
+  onClose: () => void;
+}) {
+  const api = useApi();
+  const qc = useQueryClient();
+  const [claiming, setClaiming] = useState(false);
+
+  const claimMut = useMutation({
+    mutationFn: (memberId: string) =>
+      api.post(`/activities/${activityId}/members/${memberId}/claim/`, {}, activityId),
+    onSuccess: () => {
+      setClaiming(false);
+      qc.invalidateQueries(); // votes, feed, members, everything moved
+    },
+  });
+
+  // guests other than yourself — members whose device/session may be lost
+  const zombies = members.filter((m) => m.is_anonymous && m.id !== activity.me?.id);
+
+  return (
+    <BottomSheet onClose={onClose} title="Members">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="font-semibold text-lg">Members</h2>
-        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
-          {(membersQ.data ?? []).map((m) => (
-            <div key={m.id} className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">{m.display_name}</span>
+        {claiming ? (
+          <Button variant="ghost" size="sm" onClick={() => setClaiming(false)}>Cancel</Button>
+        ) : (
+          <Button variant="outline" size="sm" onClick={() => setClaiming(true)} disabled={zombies.length === 0}>
+            Claim user
+          </Button>
+        )}
+      </div>
+      {claiming && (
+        <p className="text-sm text-muted-foreground">
+          Pick a guest whose device or session was lost. Their votes and actions move to you.
+        </p>
+      )}
+      <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
+        {(claiming ? zombies : members).map((m) =>
+          claiming ? (
+            <ConfirmDelete
+              key={m.id}
+              title={`Claim ${m.display_name}?`}
+              actionLabel="Claim"
+              description={`All of ${m.display_name}'s votes, RSVPs, and comments become yours, then the member is removed. Where you both voted on the same thing, your own vote is kept. This can't be undone.`}
+              onConfirm={() => claimMut.mutate(m.id)}
+              trigger={
+                <button className="flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 text-left hover:bg-muted transition-colors">
+                  <UserAvatar name={m.display_name} className="size-6 text-[10px]" />
+                  <span className="text-sm font-medium flex-1 truncate">{m.display_name}</span>
+                  <span className="text-xs text-muted-foreground">joined {timeAgo(m.joined_at)}</span>
+                </button>
+              }
+            />
+          ) : (
+            <div key={m.id} className="flex items-center gap-2">
+              <UserAvatar name={m.display_name} className="size-6 text-[10px]" />
+              <span className="text-sm font-medium flex-1 truncate">{m.display_name}</span>
               <span className="text-xs text-muted-foreground">
                 {m.is_anonymous ? "guest · " : ""}joined {timeAgo(m.joined_at)}
               </span>
             </div>
-          ))}
-        </div>
-      </BottomSheet>
-    )}
-    </>
+          ),
+        )}
+      </div>
+      {claimMut.isError && <p className="text-sm text-destructive">Couldn't claim that member — try again.</p>}
+    </BottomSheet>
+  );
+}
+
+function PinSheet({
+  activity,
+  activityId,
+  onClose,
+}: {
+  activity: Activity;
+  activityId: string;
+  onClose: () => void;
+}) {
+  const api = useApi();
+  const qc = useQueryClient();
+  const [newPin, setNewPin] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const pinMut = useMutation({
+    mutationFn: (pin: string) => api.patch(`/activities/${activityId}/`, { pin }, activityId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["activity", activityId] });
+      onClose();
+    },
+  });
+
+  const copyPin = async () => {
+    if (!activity.pin) return;
+    await navigator.clipboard.writeText(activity.pin);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <BottomSheet onClose={onClose} title="Activity PIN">
+      <h2 className="font-semibold text-lg">Activity PIN</h2>
+      <div className="flex items-center justify-center gap-3 py-4">
+        <span className="text-4xl font-mono tracking-widest">{activity.pin ?? "····"}</span>
+        {activity.pin && (
+          <Button variant="ghost" size="icon-sm" aria-label="Copy PIN" onClick={copyPin}>
+            {copied ? <Check className="text-green-600" /> : <Copy />}
+          </Button>
+        )}
+      </div>
+      {!activity.pin && (
+        <p className="text-sm text-muted-foreground text-center">
+          This PIN was set before it could be displayed — set a new one below.
+        </p>
+      )}
+      <Input
+        placeholder="New PIN — leave empty to remove it"
+        value={newPin}
+        onChange={(e) => setNewPin(e.target.value)}
+      />
+      {pinMut.isError && <p className="text-sm text-destructive">Something went wrong.</p>}
+      <div className="flex gap-2 justify-end">
+        <Button variant="ghost" onClick={onClose}>Close</Button>
+        <Button onClick={() => pinMut.mutate(newPin.trim())} disabled={pinMut.isPending}>
+          {pinMut.isPending ? "Saving…" : newPin.trim() ? "Change PIN" : "Remove PIN"}
+        </Button>
+      </div>
+    </BottomSheet>
   );
 }

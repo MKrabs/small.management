@@ -20,5 +20,5 @@ class EventSerializer(serializers.ModelSerializer):
         fields = [
             "id", "cycle_id", "poll_id",
             "date", "time_start", "time_end", "note",
-            "created_by", "rsvps", "created_at",
+            "created_by", "rsvps", "created_at", "deleted_at",
         ]
