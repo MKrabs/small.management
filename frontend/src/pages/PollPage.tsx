@@ -8,6 +8,13 @@ import type { Poll, Slot } from "@/api/types";
 import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
+import ConfirmDelete from "@/components/ConfirmDelete";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import FinalizeSheet from "@/components/sheets/FinalizeSheet";
 import SlotEditor from "@/components/poll/SlotEditor";
 import Heatmap from "@/components/poll/Heatmap";
@@ -67,15 +74,21 @@ export default function PollPage() {
                 Poll{pollQ.data.deleted_at && " · deleted"}
               </span>
               {!pollQ.data.deleted_at && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground"
-                  aria-label="Delete poll"
-                  onClick={() => window.confirm("Delete this poll for everyone? It stays visible, struck through.") && deleteMut.mutate()}
-                >
-                  <Trash2 />
-                </Button>
+                <ConfirmDelete
+                  title="Delete this poll?"
+                  description="It's deleted for everyone but stays visible, struck through."
+                  onConfirm={() => deleteMut.mutate()}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-muted-foreground"
+                      aria-label="Delete poll"
+                    >
+                      <Trash2 />
+                    </Button>
+                  }
+                />
               )}
             </div>
             <h1 className={`text-2xl font-semibold ${pollQ.data.deleted_at ? "line-through opacity-40" : ""}`}>
@@ -201,8 +214,6 @@ function SlotRow({ slot }: { slot: Slot }) {
 }
 
 function MemberBreakdown({ slots }: { slots: Slot[] }) {
-  const [open, setOpen] = useState(false);
-
   const byMember = useMemo(() => {
     const map = new Map<string, { name: string; slots: Slot[] }>();
     for (const s of slots) {
@@ -216,26 +227,22 @@ function MemberBreakdown({ slots }: { slots: Slot[] }) {
   if (byMember.length === 0) return null;
 
   return (
-    <section className="border-t pt-4">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ChevronRight className={`size-4 transition-transform ${open ? "rotate-90" : ""}`} />
+    <Collapsible render={<section className="flex flex-col gap-4" />}>
+      <Separator />
+      <CollapsibleTrigger className="group flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
         See individual responses
-      </button>
-      {open && (
-        <div className="mt-3 flex flex-col gap-4">
-          {byMember.map((m) => (
-            <div key={m.name} className="flex flex-col gap-1">
-              <p className="text-sm font-medium">{m.name}</p>
-              {m.slots.map((s) => (
-                <SlotRow key={s.id} slot={s} />
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-col gap-4">
+        {byMember.map((m) => (
+          <div key={m.name} className="flex flex-col gap-1">
+            <p className="text-sm font-medium">{m.name}</p>
+            {m.slots.map((s) => (
+              <SlotRow key={s.id} slot={s} />
+            ))}
+          </div>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

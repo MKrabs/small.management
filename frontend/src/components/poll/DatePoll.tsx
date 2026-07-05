@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Poll, Slot } from "@/api/types";
@@ -51,6 +52,7 @@ export default function DatePoll({ poll, activityId, slots }: Props) {
       qc.invalidateQueries({ queryKey: ["slots", activityId, String(poll.id)] });
       qc.invalidateQueries({ queryKey: ["poll", activityId, String(poll.id)] });
     },
+    onError: () => toast.error("Couldn't save your vote — try again."),
   });
 
   const commit = (days: string[]) => {

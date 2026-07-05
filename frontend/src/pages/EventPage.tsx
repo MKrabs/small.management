@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { CalendarPlus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
@@ -11,9 +12,10 @@ import CommentSection from "@/components/comments/CommentSection";
 import NewCycleSheet from "@/components/sheets/NewCycleSheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FieldError } from "@/components/ui/field";
 import BottomSheet from "@/components/layout/BottomSheet";
-import { STATUS_CHIP } from "@/lib/status";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
 import { cn, formatDay, formatTime, isEventPast, timeAgo } from "@/lib/utils";
 
 type RsvpStatus = RSVP["status"];
@@ -23,10 +25,16 @@ const RSVP_LABEL: Record<RsvpStatus, string> = {
   maybe: "maybe",
   not_going: "not going",
 };
-const RSVP_CHIP: Record<RsvpStatus, string> = {
-  going: STATUS_CHIP.yes,
-  maybe: STATUS_CHIP.maybe,
-  not_going: STATUS_CHIP.no,
+// RSVP statuses reuse the yes/maybe/no palette.
+const RSVP_STATUS: Record<RsvpStatus, VoteStatus> = {
+  going: "yes",
+  maybe: "maybe",
+  not_going: "no",
+};
+const RSVP_TOGGLE: Record<RsvpStatus, string> = {
+  going: STATUS_TOGGLE.yes,
+  maybe: STATUS_TOGGLE.maybe,
+  not_going: STATUS_TOGGLE.no,
 };
 
 export default function EventPage() {
@@ -84,21 +92,23 @@ export default function EventPage() {
           </div>
 
           {/* RSVP tally — tap to filter */}
-          <div className="flex gap-2">
+          <ToggleGroup
+            value={filter ? [filter] : []}
+            onValueChange={(v) => setFilter((v[0] as RsvpStatus) ?? null)}
+            variant="outline"
+            className="w-full"
+          >
             {(["going", "maybe", "not_going"] as const).map((s) => (
-              <button
+              <ToggleGroupItem
                 key={s}
-                onClick={() => setFilter(filter === s ? null : s)}
-                className={cn(
-                  "border rounded-lg px-4 py-2 text-sm flex-1 text-center transition-colors",
-                  filter === s ? RSVP_CHIP[s] : "hover:bg-muted",
-                )}
+                value={s}
+                className={cn("flex-1 h-auto flex-col gap-0 py-2", RSVP_TOGGLE[s])}
               >
-                <span className="text-lg font-semibold block">{tally(s)}</span>
-                {RSVP_LABEL[s]}
-              </button>
+                <span className="text-lg font-semibold">{tally(s)}</span>
+                <span className="text-sm font-normal">{RSVP_LABEL[s]}</span>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
 
           {/* Member RSVPs */}
           <section className="flex flex-col gap-2">
@@ -112,14 +122,12 @@ export default function EventPage() {
                   {rsvp?.comment && (
                     <span className="text-xs text-muted-foreground truncate max-w-[40%]">“{rsvp.comment}”</span>
                   )}
-                  <span
-                    className={cn(
-                      "text-xs px-2.5 py-1 rounded-full border shrink-0",
-                      rsvp ? RSVP_CHIP[rsvp.status] : "text-muted-foreground",
-                    )}
+                  <Badge
+                    variant={rsvp ? RSVP_STATUS[rsvp.status] : "outline"}
+                    className={cn("shrink-0", !rsvp && "text-muted-foreground")}
                   >
                     {rsvp ? RSVP_LABEL[rsvp.status] : "no answer"}
-                  </span>
+                  </Badge>
                 </div>
               ))}
           </section>
@@ -224,27 +232,29 @@ function RsvpSheet({
       qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onClose();
     },
+    onError: () => toast.error("Something went wrong."),
   });
 
   return (
     <BottomSheet onClose={onClose} title="Your RSVP">
         <h2 className="font-semibold text-lg">Your RSVP</h2>
-        <div className="flex gap-2">
+        <ToggleGroup
+          value={status ? [status] : []}
+          onValueChange={(v) => setStatus((v[0] as RsvpStatus) ?? null)}
+          variant="outline"
+          className="w-full"
+        >
           {(["going", "maybe", "not_going"] as const).map((s) => (
-            <button
+            <ToggleGroupItem
               key={s}
-              onClick={() => setStatus(s)}
-              className={cn(
-                "border rounded-lg px-4 py-2 text-sm flex-1 transition-colors",
-                status === s ? RSVP_CHIP[s] : "hover:bg-muted",
-              )}
+              value={s}
+              className={cn("flex-1 h-auto py-2 font-normal", RSVP_TOGGLE[s])}
             >
               {RSVP_LABEL[s]}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
         <Input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
-        {mutation.isError && <FieldError>Something went wrong.</FieldError>}
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={() => mutation.mutate()} disabled={!status || mutation.isPending}>

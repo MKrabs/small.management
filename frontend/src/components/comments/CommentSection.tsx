@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import type { Comment } from "@/api/types";
+import ConfirmDelete from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { timeAgo } from "@/lib/utils";
 
 type Target = { poll?: number; event?: number };
@@ -33,13 +37,18 @@ export default function CommentSection({ activityId, target }: { activityId: str
   const roots = byParent.get(null) ?? [];
 
   return (
-    <section className="border-t pt-4 flex flex-col gap-3">
+    <section className="flex flex-col gap-3">
+      <Separator />
       <h2 className="text-sm font-medium">
         Comments{commentsQ.data && commentsQ.data.length > 0 ? ` (${commentsQ.data.length})` : ""}
       </h2>
       {commentsQ.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
       {roots.length === 0 && commentsQ.isSuccess && (
-        <p className="text-sm text-muted-foreground">No comments yet.</p>
+        <Empty className="p-4">
+          <EmptyHeader>
+            <EmptyDescription>No comments yet.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
       {roots.map((c) => (
         <CommentNode key={c.id} comment={c} byParent={byParent} activityId={activityId} />
@@ -86,12 +95,12 @@ function CommentNode({
             <button className="hover:text-foreground" onClick={() => setReplying((v) => !v)}>
               Reply
             </button>
-            <button
-              className="hover:text-destructive"
-              onClick={() => window.confirm("Delete this comment for everyone?") && deleteMut.mutate()}
-            >
-              Delete
-            </button>
+            <ConfirmDelete
+              title="Delete this comment?"
+              description="It's deleted for everyone. Replies stay."
+              onConfirm={() => deleteMut.mutate()}
+              trigger={<button className="hover:text-destructive">Delete</button>}
+            />
           </>
         )}
         {children.length > 0 && (
@@ -149,6 +158,7 @@ function Composer({
       qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onDone?.();
     },
+    onError: () => toast.error("Couldn't post your comment — try again."),
   });
 
   return (
