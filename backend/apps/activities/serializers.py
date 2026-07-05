@@ -15,12 +15,17 @@ class MemberSerializer(serializers.ModelSerializer):
 
 class ActivitySerializer(serializers.ModelSerializer):
     has_pin = serializers.SerializerMethodField()
+    pin = serializers.SerializerMethodField()
     member_count = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
     me = serializers.SerializerMethodField()
 
     def get_has_pin(self, obj):
         return obj.pin_hash is not None
+
+    # plaintext PIN is member-only; None for outsiders (and for pre-plaintext PINs)
+    def get_pin(self, obj):
+        return obj.pin if self._own_member(obj) else None
 
     def get_member_count(self, obj):
         return obj.members.count()
@@ -45,7 +50,7 @@ class ActivitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Activity
-        fields = ["id", "short_id", "title", "slug", "has_pin", "member_count", "is_member", "me", "created_at", "archived_at"]
+        fields = ["id", "short_id", "title", "slug", "has_pin", "pin", "member_count", "is_member", "me", "created_at", "archived_at"]
 
 
 class CycleSerializer(serializers.ModelSerializer):

@@ -127,6 +127,8 @@ function logText(log: Log): string {
     case "retracted_vote": return "retracted a vote";
     case "added_option": return `added option “${d.label}”`;
     case "finalized_poll": return `finalized ${d.date} as event`;
+    case "created_event": return `posted an event on ${d.date}`;
+    case "claimed_member": return `claimed ${d.display_name}'s votes and actions`;
     case "locked_voting": return "finished voting on a poll";
     case "unlocked_voting": return "resumed voting on a poll";
     // legacy log lines from before proposals were folded into polls

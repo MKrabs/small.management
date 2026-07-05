@@ -149,7 +149,7 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
               )}
             >
               {dateStr === todayStr ? (
-                <span className="grid size-6 place-items-center rounded-full border-2 border-red-500">
+                <span className="grid size-6 place-items-center rounded-full bg-red-500 text-white">
                   {d.getDate()}
                 </span>
               ) : (

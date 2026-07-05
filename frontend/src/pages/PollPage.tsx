@@ -75,7 +75,7 @@ export default function PollPage() {
           {/* Header */}
           <div>
             <div className="flex items-start justify-between gap-2">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+              <span className="my-auto text-xs text-muted-foreground uppercase tracking-wide">
                 Poll{pollQ.data.deleted_at && " · archived"}
                 {!pollQ.data.deleted_at && pollQ.data.locked_at && " · voting finished"}
                 {activity &&

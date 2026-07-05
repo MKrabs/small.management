@@ -6,6 +6,7 @@ activity_patterns = [
     path("join/", views.JoinActivityView.as_view()),
     path("feed/", views.FeedView.as_view()),
     path("members/", views.MemberListView.as_view()),
+    path("members/<uuid:pk>/claim/", views.MemberClaimView.as_view()),
     path("logs/", views.LogListView.as_view()),
     path("cycles/", views.CycleCreateView.as_view()),
     path("cycles/<int:pk>/", views.CycleDetailView.as_view()),

@@ -1,18 +1,15 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarPlus } from "lucide-react";
+import { Archive, ArchiveRestore, CalendarPlus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Event, Member, RSVP } from "@/api/types";
 import DetailShell from "@/components/layout/DetailShell";
-import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
-import NewCycleSheet from "@/components/sheets/NewCycleSheet";
+import ConfirmDelete from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import BottomSheet from "@/components/layout/BottomSheet";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
@@ -39,11 +36,9 @@ const RSVP_TOGGLE: Record<RsvpStatus, string> = {
 
 export default function EventPage() {
   const { eventId = "" } = useParams();
-  const { id, slug, activity } = useActivity();
+  const { id, activity } = useActivity();
   const api = useApi();
-  const navigate = useNavigate();
-  const [rsvpOpen, setRsvpOpen] = useState(false);
-  const [cycleOpen, setCycleOpen] = useState(false);
+  const qc = useQueryClient();
   const [filter, setFilter] = useState<RsvpStatus | null>(null);
 
   const eventQ = useQuery({
@@ -59,6 +54,26 @@ export default function EventPage() {
   const rsvps = event?.rsvps ?? [];
   const myRsvp = rsvps.find((r) => r.member.id === activity?.me?.id);
   const past = event ? isEventPast(event.date) : false;
+  const archived = !!event?.deleted_at;
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["event", id, eventId] });
+    qc.invalidateQueries({ queryKey: ["feed", id] });
+  };
+
+  const rsvpMut = useMutation({
+    mutationFn: (status: RsvpStatus) =>
+      // keep any comment the member set before the RSVP form was retired
+      api.put(`/activities/${id}/events/${eventId}/rsvps/`, { status, comment: myRsvp?.comment ?? "" }, id),
+    onSuccess: invalidate,
+    onError: () => toast.error("Couldn't save your RSVP — try again."),
+  });
+
+  const archiveMut = useMutation({
+    mutationFn: (isArchived: boolean) =>
+      api.patch(`/activities/${id}/events/${eventId}/`, { archived: isArchived }, id),
+    onSuccess: invalidate,
+  });
 
   const tally = (s: RsvpStatus) => rsvps.filter((r) => r.status === s).length;
 
@@ -67,11 +82,43 @@ export default function EventPage() {
       {eventQ.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
       {eventQ.isError && <p className="text-sm text-destructive">Event not found.</p>}
       {event && (
-        <div className={`flex flex-col gap-6 ${past ? "opacity-80" : ""}`}>
+        <div className={`flex flex-col gap-6 ${past && !archived ? "opacity-80" : ""}`}>
           {/* Header */}
           <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">Event</span>
-            <h1 className="text-3xl font-semibold">
+            <div className="flex items-start justify-between gap-2">
+              <span className="my-auto text-xs text-muted-foreground uppercase tracking-wide">
+                Event{archived && " · archived"}
+              </span>
+              {archived ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => archiveMut.mutate(false)}
+                >
+                  <ArchiveRestore data-icon="inline-start" />
+                  Unarchive
+                </Button>
+              ) : (
+                <ConfirmDelete
+                  title="Archive this event?"
+                  actionLabel="Archive"
+                  description="It's archived for everyone but stays visible, struck through. You can unarchive it anytime."
+                  onConfirm={() => archiveMut.mutate(true)}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-muted-foreground"
+                      aria-label="Archive event"
+                    >
+                      <Archive />
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+            <h1 className={`text-3xl font-semibold ${archived ? "line-through opacity-40" : ""}`}>
               {formatDay(event.date, { weekday: "long", month: "long", day: "numeric" })}
             </h1>
             {event.time_start && (
@@ -91,12 +138,13 @@ export default function EventPage() {
             )}
           </div>
 
-          {/* RSVP tally — tap to filter */}
+          {/* Your RSVP — tap a column to vote */}
           <ToggleGroup
-            value={filter ? [filter] : []}
-            onValueChange={(v) => setFilter((v[0] as RsvpStatus) ?? null)}
+            value={myRsvp ? [myRsvp.status] : []}
+            onValueChange={(v) => v[0] && rsvpMut.mutate(v[0] as RsvpStatus)}
             variant="outline"
             className="w-full"
+            disabled={archived || rsvpMut.isPending}
           >
             {(["going", "maybe", "not_going"] as const).map((s) => (
               <ToggleGroupItem
@@ -110,9 +158,23 @@ export default function EventPage() {
             ))}
           </ToggleGroup>
 
-          {/* Member RSVPs */}
+          {/* Member RSVPs — small toggle filters the list */}
           <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium">RSVPs</h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-medium">RSVPs</h2>
+              <ToggleGroup
+                value={filter ? [filter] : []}
+                onValueChange={(v) => setFilter((v[0] as RsvpStatus) ?? null)}
+                variant="outline"
+                size="sm"
+              >
+                {(["going", "maybe", "not_going"] as const).map((s) => (
+                  <ToggleGroupItem key={s} value={s} className={cn("text-xs font-normal", RSVP_TOGGLE[s])}>
+                    {RSVP_LABEL[s]}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
             {(membersQ.data ?? [])
               .map((m) => ({ member: m, rsvp: rsvps.find((r) => r.member.id === m.id) }))
               .filter(({ rsvp }) => (filter ? rsvp?.status === filter : true))
@@ -144,38 +206,6 @@ export default function EventPage() {
           <CommentSection activityId={id} target={{ event: Number(eventId) }} />
         </div>
       )}
-
-      {event && (
-        <StickyBar>
-          <Button
-            variant={past ? "outline" : "default"}
-            className="flex-1"
-            size="lg"
-            onClick={() => setRsvpOpen(true)}
-          >
-            {myRsvp ? "Change RSVP" : "RSVP"}
-          </Button>
-          <Button
-            variant={past ? "default" : "outline"}
-            className="flex-1"
-            size="lg"
-            onClick={() => setCycleOpen(true)}
-          >
-            Start new cycle
-          </Button>
-        </StickyBar>
-      )}
-
-      {rsvpOpen && event && (
-        <RsvpSheet activityId={id} eventId={event.id} myRsvp={myRsvp} onClose={() => setRsvpOpen(false)} />
-      )}
-      {cycleOpen && (
-        <NewCycleSheet
-          activityId={id}
-          onClose={() => setCycleOpen(false)}
-          onCreated={() => navigate(`/activity/${id}/${slug}`)}
-        />
-      )}
     </DetailShell>
   );
 }
@@ -206,61 +236,4 @@ function downloadIcs(event: Event, title: string) {
   a.download = `${title.toLowerCase().replace(/\s+/g, "-")}.ics`;
   a.click();
   URL.revokeObjectURL(a.href);
-}
-
-function RsvpSheet({
-  activityId,
-  eventId,
-  myRsvp,
-  onClose,
-}: {
-  activityId: string;
-  eventId: number;
-  myRsvp: RSVP | undefined;
-  onClose: () => void;
-}) {
-  const api = useApi();
-  const qc = useQueryClient();
-  const [status, setStatus] = useState<RsvpStatus | null>(myRsvp?.status ?? null);
-  const [comment, setComment] = useState(myRsvp?.comment ?? "");
-
-  const mutation = useMutation({
-    mutationFn: () =>
-      api.put(`/activities/${activityId}/events/${eventId}/rsvps/`, { status, comment }, activityId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["event", activityId] });
-      qc.invalidateQueries({ queryKey: ["feed", activityId] });
-      onClose();
-    },
-    onError: () => toast.error("Something went wrong."),
-  });
-
-  return (
-    <BottomSheet onClose={onClose} title="Your RSVP">
-        <h2 className="font-semibold text-lg">Your RSVP</h2>
-        <ToggleGroup
-          value={status ? [status] : []}
-          onValueChange={(v) => setStatus((v[0] as RsvpStatus) ?? null)}
-          variant="outline"
-          className="w-full"
-        >
-          {(["going", "maybe", "not_going"] as const).map((s) => (
-            <ToggleGroupItem
-              key={s}
-              value={s}
-              className={cn("flex-1 h-auto py-2 font-normal", RSVP_TOGGLE[s])}
-            >
-              {RSVP_LABEL[s]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        <Input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
-        <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => mutation.mutate()} disabled={!status || mutation.isPending}>
-            {mutation.isPending ? "Saving…" : "Save"}
-          </Button>
-        </div>
-    </BottomSheet>
-  );
 }
