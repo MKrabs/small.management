@@ -7,7 +7,7 @@ description: Voting models per poll kind, heatmap rules, and finalizing.
 
 ## Choice Polls
 
-Options with votes. Single-choice polls replace the member's previous vote when they pick another option; multiple-choice polls (`allow_multiple`) accumulate. Any member can add options after creation. Votes are hard-deleted on unvote (no retraction history).
+Options with votes. Single-choice polls replace the member's previous vote when they pick another option; multiple-choice polls (`allow_multiple`) accumulate. Any member can add options after creation, reorder them by dragging, or remove one — removing a voted option invalidates its votes and posts a ⚠️ system comment on the poll. Votes are hard-deleted on unvote (no retraction history).
 
 UI: exactly two options render as two big side-by-side buttons with voter avatars beneath; three or more render as rows with proportional bars, counts, and avatar chips.
 

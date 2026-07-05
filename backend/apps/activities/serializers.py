@@ -45,7 +45,7 @@ class ActivitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Activity
-        fields = ["id", "short_id", "title", "slug", "has_pin", "member_count", "is_member", "me", "created_at"]
+        fields = ["id", "short_id", "title", "slug", "has_pin", "member_count", "is_member", "me", "created_at", "archived_at"]
 
 
 class CycleSerializer(serializers.ModelSerializer):

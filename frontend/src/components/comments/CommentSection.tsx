@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { timeAgo } from "@/lib/utils";
+import { cn, isWarning, timeAgo } from "@/lib/utils";
 
 type Target = { poll?: number; event?: number };
 
@@ -73,33 +73,42 @@ function CommentNode({
   const [collapsed, setCollapsed] = useState(false);
 
   const children = byParent.get(comment.id) ?? [];
-  const deleted = !!comment.deleted_at;
+  const archived = !!comment.deleted_at;
+  const warning = !archived && isWarning(comment.body);
 
-  const deleteMut = useMutation({
-    mutationFn: () => api.del(`/activities/${activityId}/comments/${comment.id}/`, activityId),
+  const archiveMut = useMutation({
+    mutationFn: (isArchived: boolean) =>
+      api.patch(`/activities/${activityId}/comments/${comment.id}/`, { archived: isArchived }, activityId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", activityId] }),
   });
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className={cn("flex flex-col gap-1", warning && "rounded-md bg-yellow-500/10 p-2 -mx-2")}>
       <div className="flex items-baseline gap-2">
-        <span className="text-sm font-medium">{comment.member?.display_name ?? "someone"}</span>
+        <span className="text-sm font-medium">
+          {comment.member?.display_name ?? (warning ? "System" : "someone")}
+        </span>
         <span className="text-xs text-muted-foreground">{timeAgo(comment.created_at)}</span>
       </div>
-      <p className={`text-sm ${deleted ? "text-muted-foreground italic" : ""}`}>
-        {deleted ? "Deleted." : comment.body}
+      <p className={`text-sm ${archived ? "text-muted-foreground italic" : ""}`}>
+        {archived ? "Archived." : comment.body}
       </p>
       <div className="flex gap-3 text-xs text-muted-foreground">
-        {!deleted && (
+        {archived ? (
+          <button className="hover:text-foreground" onClick={() => archiveMut.mutate(false)}>
+            Unarchive
+          </button>
+        ) : (
           <>
             <button className="hover:text-foreground" onClick={() => setReplying((v) => !v)}>
               Reply
             </button>
             <ConfirmDelete
-              title="Delete this comment?"
-              description="It's deleted for everyone. Replies stay."
-              onConfirm={() => deleteMut.mutate()}
-              trigger={<button className="hover:text-destructive">Delete</button>}
+              title="Archive this comment?"
+              actionLabel="Archive"
+              description="It's archived for everyone, but can be unarchived anytime. Replies stay."
+              onConfirm={() => archiveMut.mutate(true)}
+              trigger={<button className="hover:text-destructive">Archive</button>}
             />
           </>
         )}

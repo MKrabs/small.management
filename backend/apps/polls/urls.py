@@ -6,6 +6,7 @@ urlpatterns = [
     path("polls/<int:pk>/", views.PollDetailView.as_view()),
     path("polls/<int:pk>/finalize/", views.PollFinalizeView.as_view()),
     path("polls/<int:poll_id>/options/", views.OptionListCreateView.as_view()),
+    path("polls/<int:poll_id>/options/<int:pk>/", views.OptionDetailView.as_view()),
     path("polls/<int:poll_id>/options/<int:pk>/vote/", views.OptionVoteView.as_view()),
     path("polls/<int:poll_id>/slots/", views.SlotListCreateView.as_view()),
     path("polls/<int:poll_id>/slots/<int:pk>/", views.SlotDetailView.as_view()),

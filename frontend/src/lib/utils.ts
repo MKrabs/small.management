@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// warning comments (e.g. system notices about invalidated votes) get a yellow tint
+export function isWarning(body: string): boolean {
+  return body.includes("⚠️")
+}
+
 // "2026-07-04" → "Fri, Jul 4" (local-date safe: avoid UTC shift from Date("YYYY-MM-DD"))
 export function parseLocalDate(dateStr: string): Date {
   const [y, m, d] = dateStr.split("-").map(Number)

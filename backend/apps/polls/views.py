@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from apps.mixins import ActivityMixin
-from apps.activities.models import Log
+from apps.activities.models import Comment, Log
 from .models import Poll, PollKind, Option, OptionVote, Slot
 from .serializers import PollSerializer, OptionSerializer, SlotSerializer
 
@@ -39,7 +39,8 @@ class PollListCreateView(ActivityMixin, APIView):
         )
         if kind == PollKind.CHOICE:
             Option.objects.bulk_create(
-                Option(poll=poll, label=label, created_by=member) for label in option_labels
+                Option(poll=poll, label=label, position=i, created_by=member)
+                for i, label in enumerate(option_labels)
             )
         Log.record(activity, member, "created_poll", title=title, poll_id=poll.id, kind=kind)
         return Response(PollSerializer(poll, context={"member": member}).data, status=201)
@@ -51,13 +52,15 @@ class PollDetailView(ActivityMixin, APIView):
         poll = get_object_or_404(Poll, id=pk, activity=self.get_activity())
         return Response(PollSerializer(poll, context={"member": member}).data)
 
-    def delete(self, request, activity_id, pk):
+    def patch(self, request, activity_id, pk):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=pk, activity=activity)
-        poll.deleted_at = timezone.now()
-        poll.save()
-        Log.record(activity, member, "soft_deleted", target="poll", target_id=pk)
+        if "archived" in request.data:
+            archived = bool(request.data["archived"])
+            poll.deleted_at = timezone.now() if archived else None
+            poll.save()
+            Log.record(activity, member, "archived" if archived else "unarchived", target="poll", target_id=pk)
         return Response(PollSerializer(poll, context={"member": member}).data)
 
 
@@ -72,7 +75,7 @@ class PollFinalizeView(ActivityMixin, APIView):
         member = self.get_member()
         poll = get_object_or_404(Poll, id=pk, activity=activity)
         if poll.deleted_at:
-            return Response({"detail": "Cannot finalize a deleted poll"}, status=400)
+            return Response({"detail": "Cannot finalize an archived poll"}, status=400)
         date = request.data.get("date")
         if not date:
             return Response({"date": ["This field is required"]}, status=400)
@@ -98,9 +101,49 @@ class OptionListCreateView(ActivityMixin, APIView):
         label = (request.data.get("label") or "").strip()
         if not label:
             return Response({"label": ["This field is required"]}, status=400)
-        option = Option.objects.create(poll=poll, label=label, created_by=member)
+        option = Option.objects.create(
+            poll=poll, label=label, position=poll.options.count(), created_by=member,
+        )
         Log.record(activity, member, "added_option", poll_id=poll_id, label=label)
         return Response(OptionSerializer(option, context={"member": member}).data, status=201)
+
+    @transaction.atomic
+    def patch(self, request, activity_id, poll_id):
+        """Reorder: {"order": [option ids, first to last]}."""
+        activity = self.get_activity()
+        member = self.get_member()
+        poll = get_object_or_404(Poll, id=poll_id, activity=activity, kind=PollKind.CHOICE)
+        order = request.data.get("order") or []
+        options = {o.id: o for o in poll.options.filter(deleted_at__isnull=True)}
+        if set(order) != set(options):
+            return Response({"order": ["Must list every option id of this poll exactly once"]}, status=400)
+        for i, option_id in enumerate(order):
+            options[option_id].position = i
+        Option.objects.bulk_update(options.values(), ["position"])
+        return Response(PollSerializer(poll, context={"member": member}).data)
+
+
+class OptionDetailView(ActivityMixin, APIView):
+    @transaction.atomic
+    def delete(self, request, activity_id, poll_id, pk):
+        activity = self.get_activity()
+        member = self.get_member()
+        poll = get_object_or_404(Poll, id=poll_id, activity=activity, kind=PollKind.CHOICE)
+        option = get_object_or_404(Option, id=pk, poll=poll, deleted_at__isnull=True)
+        option.deleted_at = timezone.now()
+        option.save()
+        vote_count = option.votes.count()
+        if vote_count:
+            # system comment so the invalidated votes are visible in the thread
+            Comment.objects.create(
+                activity=activity,
+                poll=poll,
+                member=None,
+                body=f"⚠️ Option “{option.label}” was removed by {member.display_name} — "
+                     f"{vote_count} vote{'s' if vote_count != 1 else ''} invalidated.",
+            )
+        Log.record(activity, member, "removed_option", poll_id=poll_id, label=option.label, votes=vote_count)
+        return Response(PollSerializer(poll, context={"member": member}).data)
 
 
 class OptionVoteView(ActivityMixin, APIView):

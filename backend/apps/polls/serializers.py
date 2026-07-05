@@ -48,6 +48,8 @@ class PollSerializer(serializers.ModelSerializer):
         if obj.kind == PollKind.CHOICE:
             member_ids = set()
             for opt in obj.options.all():
+                if opt.deleted_at:  # removed option → its votes are invalidated
+                    continue
                 member_ids.update(v.member_id for v in opt.votes.all())
             return len(member_ids)
         return obj.slots.filter(deleted_at__isnull=True).values("member_id").distinct().count()

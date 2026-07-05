@@ -133,7 +133,11 @@ function logText(log: Log): string {
     case "finalized_proposal": return "set a proposal as event";
     case "rsvp": return `RSVP'd ${d.status?.replace("_", " ")}`;
     case "created_comment": return "commented";
-    case "soft_deleted": return `deleted a ${d.target}`;
+    case "removed_option": return `removed option “${d.label}”${Number(d.votes) > 0 ? ` (${d.votes} vote${Number(d.votes) !== 1 ? "s" : ""} invalidated)` : ""}`;
+    case "archived": return `archived a ${d.target}`;
+    case "unarchived": return `unarchived a ${d.target}`;
+    // legacy name for "archived" from before the rename
+    case "soft_deleted": return `archived a ${d.target}`;
     case "started_cycle": return `started cycle “${d.name}”`;
     case "renamed_cycle": return `renamed a cycle to “${d.name}”`;
     case "changed_pin": return "changed the PIN";

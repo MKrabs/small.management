@@ -19,6 +19,7 @@ class Activity(models.Model):
     slug = models.SlugField(max_length=40)
     pin_hash = models.CharField(max_length=128, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.short_id:

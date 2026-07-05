@@ -29,7 +29,7 @@ Dedicated page for one decision. Reached by tapping its feed card. Shows the ful
 - Kind label + poll title / question
 - Created by · timestamp
 - "X of Y members have voted"
-- Delete (soft) in the corner
+- Archive in the corner (unarchive when archived)
 
 ## Voting UI per Kind
 
@@ -44,7 +44,7 @@ Collapsed by default ("See individual responses"). Expands to show each member's
 
 ## Comments
 
-Full Reddit-style tree, open by default: nested replies with indent, collapse per branch, reply and delete inline. The feed card only previews the latest 3 top-level comments; this page is where members actually comment.
+Full Reddit-style tree, open by default: nested replies with indent, collapse per branch, reply and archive inline. The feed card only previews the latest 3 top-level comments; this page is where members actually comment.
 
 ## Sticky Bottom
 

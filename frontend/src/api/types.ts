@@ -21,6 +21,7 @@ export type Activity = {
   is_member: boolean;
   me: Member | null;
   created_at: string;
+  archived_at: string | null;
 };
 
 export type Cycle = {

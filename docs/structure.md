@@ -53,7 +53,7 @@ Default cycle name: incremented ("Karaoke night #2"). Any member can rename it a
 
 - Activities have no enforced end date. They can sit dormant indefinitely.
 - Events auto-archive 1 day after the event date passes.
-- Everything uses soft delete — nothing is permanently removed from the database.
+- Everything uses soft delete under the hood (surfaced as “archive” in the UI) — nothing is permanently removed from the database.
 
 ## Multiple Polls
 

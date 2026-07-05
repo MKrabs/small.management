@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronRight, Plus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Poll, Slot } from "@/api/types";
@@ -34,8 +34,8 @@ export default function PollPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [finalizeOpen, setFinalizeOpen] = useState(false);
 
-  const deleteMut = useMutation({
-    mutationFn: () => api.del(`/activities/${id}/polls/${pollId}/`, id),
+  const archiveMut = useMutation({
+    mutationFn: (archived: boolean) => api.patch(`/activities/${id}/polls/${pollId}/`, { archived }, id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["poll", id, pollId] });
       qc.invalidateQueries({ queryKey: ["feed", id] });
@@ -71,21 +71,32 @@ export default function PollPage() {
           <div>
             <div className="flex items-start justify-between gap-2">
               <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                Poll{pollQ.data.deleted_at && " · deleted"}
+                Poll{pollQ.data.deleted_at && " · archived"}
               </span>
-              {!pollQ.data.deleted_at && (
+              {pollQ.data.deleted_at ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => archiveMut.mutate(false)}
+                >
+                  <ArchiveRestore data-icon="inline-start" />
+                  Unarchive
+                </Button>
+              ) : (
                 <ConfirmDelete
-                  title="Delete this poll?"
-                  description="It's deleted for everyone but stays visible, struck through."
-                  onConfirm={() => deleteMut.mutate()}
+                  title="Archive this poll?"
+                  actionLabel="Archive"
+                  description="It's archived for everyone but stays visible, struck through. You can unarchive it anytime."
+                  onConfirm={() => archiveMut.mutate(true)}
                   trigger={
                     <Button
                       variant="ghost"
                       size="icon-xs"
                       className="text-muted-foreground"
-                      aria-label="Delete poll"
+                      aria-label="Archive poll"
                     >
-                      <Trash2 />
+                      <Archive />
                     </Button>
                   }
                 />

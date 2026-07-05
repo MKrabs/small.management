@@ -17,11 +17,13 @@ export default function ConfirmDelete({
   description,
   trigger,
   onConfirm,
+  actionLabel = "Delete",
 }: {
   title: string;
   description: string;
   trigger: React.ReactElement<Record<string, unknown>>;
   onConfirm: () => void;
+  actionLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -41,7 +43,7 @@ export default function ConfirmDelete({
               onConfirm();
             }}
           >
-            Delete
+            {actionLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
