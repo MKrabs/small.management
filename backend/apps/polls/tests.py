@@ -122,6 +122,17 @@ class PollKindTests(TestCase):
         restored = self.client.patch(url, {"archived": False}, format="json").json()
         self.assertIsNone(restored["deleted_at"])
 
+    def test_lock_voting_blocks_votes_and_is_reversible(self):
+        poll = self._create(title="Pizza?", kind="choice", options=["Yes", "No"]).json()
+        url = f"{self.base}/polls/{poll['id']}/"
+        opt = poll["options"][0]["id"]
+        locked = self.client.patch(url, {"locked": True}, format="json").json()
+        self.assertIsNotNone(locked["locked_at"])
+        self.assertEqual(self.client.put(f"{url}options/{opt}/vote/").status_code, 400)
+        self.assertEqual(self.client.post(f"{url}options/", {"label": "Maybe"}, format="json").status_code, 400)
+        self.client.patch(url, {"locked": False}, format="json")
+        self.assertEqual(self.client.put(f"{url}options/{opt}/vote/").status_code, 200)
+
     def test_feed_poll_includes_kind_and_comments(self):
         poll = self._create(title="Pizza?", kind="choice", options=["Yes", "No"]).json()
         self.client.post(f"{self.base}/comments/", {"body": "hot take", "poll": poll["id"]}, format="json")

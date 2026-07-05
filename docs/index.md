@@ -6,7 +6,7 @@
 * [Structure](structure.md) - Entity hierarchy (Activity → Poll/Event) and the planning loop.
 * [Governance](governance.md) - The no-admin model, archiving, and the activity log.
 * [Membership](membership.md) - How members join, anonymous vs. logged-in identity, and PIN protection.
-* [Voting](voting.md) - Voting models per poll kind, heatmap rules, and finalizing.
+* [Voting](voting.md) - Voting models per poll kind, heatmap rules, and finishing a vote.
 * [Deferred Features](future.md) - Features explicitly deferred past v1, so they don't get forgotten.
 
 ## Screens

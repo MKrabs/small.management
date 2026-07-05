@@ -18,6 +18,7 @@ class Poll(models.Model):
     created_by = models.ForeignKey("activities.Member", on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    locked_at = models.DateTimeField(null=True, blank=True)  # voting finished (reversible)
 
     def __str__(self):
         return self.title

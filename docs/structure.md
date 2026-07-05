@@ -33,11 +33,10 @@ An Activity is the top-level container. Everything else lives inside it. Multipl
 
 1. A member creates a **Poll** of whatever kind fits the question
 2. Members vote — right on the feed card for choice/date/range polls, on the dedicated page for date+time
-3. Any member **finalizes** the winning date into an **Event**
-4. Members RSVP to the event
-5. After the event, any member can start a **New Cycle** — same activity, fresh planning round
+3. Any member **finishes voting** — the poll locks (reversibly) with the winning choice(s) crowned
+4. After the event, any member can start a **New Cycle** — same activity, fresh planning round
 
-Proposals were removed: polls finalize straight into events (pick the date, optionally a time).
+Proposals were removed. Events and RSVPs still exist for previously finalized polls, but new decisions end at "voting finished" rather than becoming events.
 
 ## Feed Cards
 

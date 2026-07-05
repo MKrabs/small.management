@@ -92,5 +92,5 @@ class PollSerializer(serializers.ModelSerializer):
         fields = [
             "id", "cycle_id", "kind", "allow_multiple", "title", "created_by",
             "voter_count", "my_vote", "options", "slots",
-            "comment_count", "latest_comments", "created_at", "deleted_at",
+            "comment_count", "latest_comments", "created_at", "deleted_at", "locked_at",
         ]

@@ -82,6 +82,8 @@ export type Poll = {
   latest_comments: Comment[];
   created_at: string;
   deleted_at: string | null;
+  /** Voting finished (reversible). */
+  locked_at: string | null;
 };
 
 export type Slot = {

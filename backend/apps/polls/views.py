@@ -10,6 +10,13 @@ from .models import Poll, PollKind, Option, OptionVote, Slot
 from .serializers import PollSerializer, OptionSerializer, SlotSerializer
 
 
+def _locked(poll):
+    """400 response if voting on this poll is finished, else None."""
+    if poll.locked_at:
+        return Response({"detail": "Voting is finished on this poll"}, status=400)
+    return None
+
+
 class PollListCreateView(ActivityMixin, APIView):
     def get(self, request, activity_id):
         member = self.get_member()
@@ -61,6 +68,11 @@ class PollDetailView(ActivityMixin, APIView):
             poll.deleted_at = timezone.now() if archived else None
             poll.save()
             Log.record(activity, member, "archived" if archived else "unarchived", target="poll", target_id=pk)
+        if "locked" in request.data:
+            locked = bool(request.data["locked"])
+            poll.locked_at = timezone.now() if locked else None
+            poll.save()
+            Log.record(activity, member, "locked_voting" if locked else "unlocked_voting", poll_id=pk)
         return Response(PollSerializer(poll, context={"member": member}).data)
 
 
@@ -98,6 +110,8 @@ class OptionListCreateView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity, kind=PollKind.CHOICE)
+        if err := _locked(poll):
+            return err
         label = (request.data.get("label") or "").strip()
         if not label:
             return Response({"label": ["This field is required"]}, status=400)
@@ -113,6 +127,8 @@ class OptionListCreateView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity, kind=PollKind.CHOICE)
+        if err := _locked(poll):
+            return err
         order = request.data.get("order") or []
         options = {o.id: o for o in poll.options.filter(deleted_at__isnull=True)}
         if set(order) != set(options):
@@ -129,6 +145,8 @@ class OptionDetailView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity, kind=PollKind.CHOICE)
+        if err := _locked(poll):
+            return err
         option = get_object_or_404(Option, id=pk, poll=poll, deleted_at__isnull=True)
         option.deleted_at = timezone.now()
         option.save()
@@ -154,6 +172,8 @@ class OptionVoteView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity, kind=PollKind.CHOICE)
+        if err := _locked(poll):
+            return err
         option = get_object_or_404(Option, id=pk, poll=poll, deleted_at__isnull=True)
         if not poll.allow_multiple:
             OptionVote.objects.filter(option__poll=poll, member=member).exclude(option=option).delete()
@@ -165,6 +185,8 @@ class OptionVoteView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity, kind=PollKind.CHOICE)
+        if err := _locked(poll):
+            return err
         OptionVote.objects.filter(option_id=pk, option__poll=poll, member=member).delete()
         Log.record(activity, member, "retracted_vote", poll_id=poll_id, option_id=pk)
         return Response(PollSerializer(poll, context={"member": member}).data)
@@ -202,6 +224,8 @@ class SlotListCreateView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity)
+        if err := _locked(poll):
+            return err
         # binary kinds are always "yes"; datetime keeps the tri-state
         status_val = "yes" if poll.kind in (PollKind.DATE, PollKind.RANGE) else request.data.get("status")
         if status_val not in ("yes", "maybe", "no"):
@@ -228,6 +252,8 @@ class SlotDetailView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity)
+        if err := _locked(poll):
+            return err
         slot = get_object_or_404(Slot, id=pk, poll=poll)
         for field in ("status", "date", "date_end", "time_start", "time_end", "note"):
             if field in request.data:
@@ -245,6 +271,8 @@ class SlotDetailView(ActivityMixin, APIView):
         activity = self.get_activity()
         member = self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=activity)
+        if err := _locked(poll):
+            return err
         slot = get_object_or_404(Slot, id=pk, poll=poll)
         slot.deleted_at = timezone.now()
         slot.save()

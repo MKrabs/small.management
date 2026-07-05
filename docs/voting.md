@@ -1,6 +1,6 @@
 ---
 type: Product Doc
-description: Voting models per poll kind, heatmap rules, and finalizing.
+description: Voting models per poll kind, heatmap rules, and finishing a vote.
 ---
 
 # Voting
@@ -50,6 +50,10 @@ Day colors in the monthly calendar (slot editor):
 
 Any member can fully retract their vote at any time. Slot retractions are logged as a destructive action.
 
-## Finalizing
+## Finishing a Vote
 
-Any member can finalize any poll into an Event at any time, regardless of vote counts or thresholds: pick the winning date (plus optional time and note). First member to act wins. The log records who did it.
+Any member can finish voting on a poll at any time, regardless of vote counts or thresholds. A finished poll stays visible with its results but accepts no more votes, options, or slot changes. The action is reversible — any member can resume voting. Both directions are logged.
+
+The leading choice(s) — options or calendar days with the most votes, once something has at least 2 — are marked with a crown.
+
+(The legacy finalize-into-event endpoint still exists in the API but has no UI.)

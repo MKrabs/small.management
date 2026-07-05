@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Poll, Slot } from "@/api/types";
+import Crown from "@/components/Crown";
 import MonthGrid from "./MonthGrid";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ export default function DatePoll({ poll, activityId, slots }: Props) {
   const qc = useQueryClient();
   const { activity } = useActivity();
   const myId = activity?.me?.id;
-  const disabled = !!poll.deleted_at || !myId;
+  const disabled = !!poll.deleted_at || !!poll.locked_at || !myId;
 
   const [month, setMonth] = useState(() => {
     const now = new Date();
@@ -68,6 +69,8 @@ export default function DatePoll({ poll, activityId, slots }: Props) {
   };
 
   const previewSet = useMemo(() => new Set(preview ?? []), [preview]);
+  // crown the leading day(s) — needs a real lead, not everyone's lone vote
+  const maxCount = Math.max(0, ...countByDay.values());
 
   return (
     <MonthGrid
@@ -76,22 +79,28 @@ export default function DatePoll({ poll, activityId, slots }: Props) {
       onTap={(day) => commit([day])}
       onDragMove={disabled ? undefined : setPreview}
       onDragEnd={disabled ? undefined : commit}
+      dragMode="paint"
       dayCell={(day) => {
         const mine = mySlotByDay.has(day);
         const count = countByDay.get(day) ?? 0;
         const others = count - (mine ? 1 : 0);
+        const top = maxCount >= 2 && count === maxCount;
         return {
           className: cn(
             mine && "bg-primary text-primary-foreground font-medium hover:bg-primary/90",
             !mine && others > 0 && (others >= 3 ? "bg-primary/25" : "bg-primary/10"),
             previewSet.has(day) && "ring-2 ring-primary ring-inset",
           ),
-          content:
-            count > 0 ? (
-              <span className={cn("text-[9px] leading-none mt-0.5", mine ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                {count}
-              </span>
-            ) : undefined,
+          content: (
+            <>
+              {top && <Crown className={cn("absolute top-0.5 right-1 h-2.5 w-3.5", mine ? "text-primary-foreground" : "text-amber-500")} />}
+              {count > 0 && (
+                <span className={cn("text-[9px] leading-none mt-0.5", mine ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                  {count}
+                </span>
+              )}
+            </>
+          ),
         };
       }}
     />

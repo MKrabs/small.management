@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { GripVertical, Plus, X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Poll, PollOption } from "@/api/types";
+import Crown from "@/components/Crown";
 import UserAvatar from "@/components/UserAvatar";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
@@ -18,7 +19,7 @@ export default function ChoicePoll({ poll, activityId }: Props) {
   const api = useApi();
   const qc = useQueryClient();
   const options = (poll.options ?? []).filter((o) => !o.deleted_at);
-  const disabled = !!poll.deleted_at;
+  const disabled = !!poll.deleted_at || !!poll.locked_at;
 
   const refresh = (updated: Poll) => {
     qc.setQueryData(["poll", activityId, String(poll.id)], updated);
@@ -82,15 +83,15 @@ export default function ChoicePoll({ poll, activityId }: Props) {
     });
   };
 
+  const maxVotes = Math.max(1, ...options.map((o) => o.voters.length));
+
   if (options.length === 2) {
     return (
-      <TwoOptions options={options} disabled={disabled} onVote={(o) => voteMut.mutate(o)}>
+      <TwoOptions options={options} disabled={disabled} maxVotes={maxVotes} onVote={(o) => voteMut.mutate(o)}>
         <AddOption poll={poll} activityId={activityId} onAdded={refresh} disabled={disabled} />
       </TwoOptions>
     );
   }
-
-  const maxVotes = Math.max(1, ...options.map((o) => o.voters.length));
   return (
     <div className="flex flex-col gap-1.5">
       {shown.map((opt) => (
@@ -124,7 +125,12 @@ export default function ChoicePoll({ poll, activityId }: Props) {
               style={{ width: `${(opt.voters.length / maxVotes) * 100}%` }}
             />
             <span className="relative flex items-center justify-between gap-2">
-              <span className={cn("truncate", opt.my_vote && "font-medium")}>{opt.label}</span>
+              <span className={cn("flex items-center gap-1.5 min-w-0", opt.my_vote && "font-medium")}>
+                <span className="truncate">{opt.label}</span>
+                {maxVotes >= 2 && opt.voters.length === maxVotes && (
+                  <Crown className="h-3 w-4 shrink-0 text-amber-500" />
+                )}
+              </span>
               <span className="flex items-center gap-1.5 shrink-0">
                 <AvatarRow voters={opt.voters} />
                 <span className="text-xs text-muted-foreground w-4 text-right">{opt.voters.length}</span>
@@ -162,11 +168,13 @@ export default function ChoicePoll({ poll, activityId }: Props) {
 function TwoOptions({
   options,
   disabled,
+  maxVotes,
   onVote,
   children,
 }: {
   options: PollOption[];
   disabled: boolean;
+  maxVotes: number;
   onVote: (opt: PollOption) => void;
   children?: React.ReactNode;
 }) {
@@ -179,12 +187,15 @@ function TwoOptions({
               disabled={disabled}
               onClick={() => onVote(opt)}
               className={cn(
-                "rounded-lg border py-4 px-2 text-center font-medium transition-colors",
+                "relative rounded-lg border py-4 px-2 text-center font-medium transition-colors",
                 opt.my_vote
                   ? "border-primary bg-primary/10 text-primary"
                   : "hover:bg-muted/50",
               )}
             >
+              {maxVotes >= 2 && opt.voters.length === maxVotes && (
+                <Crown className="absolute top-1.5 right-2 h-3 w-4 text-amber-500" />
+              )}
               {opt.label}
               <span className="block text-xs font-normal text-muted-foreground mt-0.5">
                 {opt.voters.length} vote{opt.voters.length !== 1 ? "s" : ""}

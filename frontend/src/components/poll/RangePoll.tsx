@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Poll, Slot } from "@/api/types";
+import Crown from "@/components/Crown";
 import MonthGrid, { datesBetween } from "./MonthGrid";
 import { cn, parseLocalDate } from "@/lib/utils";
 
@@ -21,7 +22,7 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
   const qc = useQueryClient();
   const { activity } = useActivity();
   const myId = activity?.me?.id;
-  const disabled = !!poll.deleted_at || !myId;
+  const disabled = !!poll.deleted_at || !!poll.locked_at || !myId;
 
   const [month, setMonth] = useState(() => {
     const now = new Date();
@@ -103,6 +104,8 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
 
   const previewSet = useMemo(() => new Set(preview ?? []), [preview]);
   const busy = createMut.isPending || moveMut.isPending || deleteMut.isPending;
+  // crown the leading day(s) — needs a real lead, not everyone's lone vote
+  const maxVoters = Math.max(0, ...[...countByDay.values()].map((s) => s.size));
 
   return (
     <div className="flex flex-col gap-2">
@@ -116,6 +119,7 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
           const mine = myDays.has(day);
           const voters = countByDay.get(day)?.size ?? 0;
           const others = voters - (mine ? 1 : 0);
+          const top = maxVoters >= 2 && voters === maxVoters;
           return {
             className: cn(
               mine && "bg-primary text-primary-foreground font-medium hover:bg-primary/90",
@@ -125,12 +129,16 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
               !mine && others > 0 && (others >= 3 ? "bg-primary/25" : "bg-primary/10"),
               previewSet.has(day) && "ring-2 ring-primary ring-inset",
             ),
-            content:
-              voters > 0 ? (
-                <span className={cn("text-[9px] leading-none mt-0.5", mine ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                  {voters}
-                </span>
-              ) : undefined,
+            content: (
+              <>
+                {top && <Crown className={cn("absolute top-0.5 right-1 h-2.5 w-3.5", mine ? "text-primary-foreground" : "text-amber-500")} />}
+                {voters > 0 && (
+                  <span className={cn("text-[9px] leading-none mt-0.5", mine ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                    {voters}
+                  </span>
+                )}
+              </>
+            ),
           };
         }}
       />

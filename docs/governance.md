@@ -10,7 +10,7 @@ description: The no-admin model, archiving, and the activity log.
 There is no admin role. Every member of an activity has equal power. Any member can:
 - Create a poll, comment, or new cycle
 - Vote on anything
-- Finalize a poll into an event
+- Finish voting on a poll (and resume it)
 - Archive (and unarchive) any card, or the whole activity
 - Change the activity PIN
 - Rename a cycle
@@ -30,7 +30,7 @@ A chronological record of meaningful actions within the activity. Visible to all
 **Logged actions include:**
 - Creating a poll, event, or comment
 - Voting or retracting a vote
-- Finalizing a poll
+- Finishing or resuming voting
 - Archiving or unarchiving anything
 - Removing a poll option
 - Changing the PIN
@@ -44,7 +44,7 @@ A chronological record of meaningful actions within the activity. Visible to all
 
 **Format:** Plain text with inline styling.
 Examples:
-- `John finalized Friday 4 July at 20h as event`
+- `John finished voting on a poll`
 - `Alex archived a poll`
 - `Sam retracted their vote on poll #1`
 

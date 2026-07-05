@@ -29,7 +29,10 @@ export default function PollCard({ poll, activityId, memberCount }: Props) {
       <button onClick={open} className="text-left hover:opacity-80 transition-opacity">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">{KIND_LABEL[poll.kind]}</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">
+              {KIND_LABEL[poll.kind]}
+              {!deleted && poll.locked_at && " · voting finished"}
+            </span>
             <h3 className={`font-medium ${deleted ? "line-through" : ""}`}>{poll.title}</h3>
           </div>
           {poll.kind === "datetime" && poll.my_vote && <MyVoteStatus my={poll.my_vote} />}
