@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, CalendarClock, MessageSquare, RefreshCw } from "lucide-react";
+import { BarChart3, MessageSquare, RefreshCw } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, FeedItem, Member } from "@/api/types";
@@ -11,13 +11,12 @@ import ActivityFeed from "@/components/feed/ActivityFeed";
 import ActivityHeader from "@/components/layout/ActivityHeader";
 import BottomSheet from "@/components/layout/BottomSheet";
 import CreatePollSheet from "@/components/sheets/CreatePollSheet";
-import CreateProposalSheet from "@/components/sheets/CreateProposalSheet";
 import CreateCommentSheet from "@/components/sheets/CreateCommentSheet";
 import NewCycleSheet from "@/components/sheets/NewCycleSheet";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 
-type SheetKind = "menu" | "poll" | "proposal" | "comment" | "cycle" | null;
+type SheetKind = "menu" | "poll" | "comment" | "cycle" | null;
 
 export default function ActivityPage() {
   const { id = "", slug = "" } = useParams();
@@ -81,14 +80,8 @@ export default function ActivityPage() {
             <MenuAction
               icon={<BarChart3 className="size-5" />}
               title="New poll"
-              hint="Ask everyone when they're free"
+              hint="Vote on options, days, or times"
               onClick={() => setSheet("poll")}
-            />
-            <MenuAction
-              icon={<CalendarClock className="size-5" />}
-              title="New proposal"
-              hint="Suggest a specific date and time"
-              onClick={() => setSheet("proposal")}
             />
             <MenuAction
               icon={<MessageSquare className="size-5" />}
@@ -114,13 +107,6 @@ export default function ActivityPage() {
             qc.invalidateQueries({ queryKey: ["feed", id] });
             navigate(`/activity/${id}/${slug}/poll/${p.id}`);
           }}
-        />
-      )}
-      {sheet === "proposal" && (
-        <CreateProposalSheet
-          activityId={id}
-          onClose={() => setSheet(null)}
-          onCreated={(p) => navigate(`/activity/${id}/${slug}/proposal/${p.id}`)}
         />
       )}
       {sheet === "comment" && (

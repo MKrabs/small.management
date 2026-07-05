@@ -1,8 +1,13 @@
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
+import { Separator } from "@/components/ui/separator";
 import type { Cycle, FeedItem, Log } from "@/api/types";
 import PollCard from "./PollCard";
-import ProposalCard from "./ProposalCard";
 import EventCard from "./EventCard";
 import CommentCard from "./CommentCard";
 import { timeAgo } from "@/lib/utils";
@@ -36,9 +41,11 @@ export default function ActivityFeed({ items, activityId, memberCount }: Props) 
 
   if (items.length === 0) {
     return (
-      <div className="py-16 text-center text-muted-foreground text-sm">
-        Nothing here yet. Use the + button to get started.
-      </div>
+      <Empty className="py-16">
+        <EmptyHeader>
+          <EmptyDescription>Nothing here yet. Use the + button to get started.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -62,8 +69,6 @@ function Cards({ items, activityId, memberCount }: { items: FeedItem[]; activity
         switch (item.type) {
           case "poll":
             return <PollCard key={`poll-${item.data.id}`} poll={item.data} activityId={activityId} memberCount={memberCount} />;
-          case "proposal":
-            return <ProposalCard key={`proposal-${item.data.id}`} proposal={item.data} activityId={activityId} />;
           case "event":
             return <EventCard key={`event-${item.data.id}`} event={item.data} activityId={activityId} />;
           case "comment":
@@ -87,27 +92,25 @@ function CycleFold({
   activityId: string;
   memberCount?: number;
 }) {
-  const [open, setOpen] = useState(false);
   const marker = seg.marker!;
   const started = new Date(marker.created_at).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
   return (
-    <div className="flex flex-col gap-3">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border-t pt-3"
-      >
-        <ChevronRight className={`size-4 transition-transform ${open ? "rotate-90" : ""}`} />
+    <Collapsible className="flex flex-col gap-3">
+      <Separator />
+      <CollapsibleTrigger className="group flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
         <span className="font-medium">{marker.name}</span>
         <span>· {started}</span>
-      </button>
-      {open &&
-        (seg.items.length > 0 ? (
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-col gap-3">
+        {seg.items.length > 0 ? (
           <Cards items={seg.items} activityId={activityId} memberCount={memberCount} />
         ) : (
           <p className="text-xs text-muted-foreground pl-6">Nothing happened in this round.</p>
-        ))}
-    </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -120,8 +123,11 @@ function logText(log: Log): string {
     case "renamed_activity": return `renamed the activity to “${d.title}”`;
     case "member_joined": return "joined";
     case "created_poll": return `created poll “${d.title}”`;
-    case "voted": return "shared availability";
+    case "voted": return "voted";
     case "retracted_vote": return "retracted a vote";
+    case "added_option": return `added option “${d.label}”`;
+    case "finalized_poll": return `finalized ${d.date} as event`;
+    // legacy log lines from before proposals were folded into polls
     case "created_proposal": return `proposed ${d.date}`;
     case "voted_proposal": return `voted ${d.status} on a proposal`;
     case "finalized_proposal": return "set a proposal as event";

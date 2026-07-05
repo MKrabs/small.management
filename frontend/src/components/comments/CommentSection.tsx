@@ -1,75 +1,84 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import type { Comment } from "@/api/types";
+import ConfirmDelete from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { timeAgo } from "@/lib/utils";
 
-type Target = { poll?: number; proposal?: number; event?: number };
+type Target = { poll?: number; event?: number };
 
-/** Threaded comments attached to a poll / proposal / event. Collapsed by default. */
+/** Reddit-style comment tree attached to a poll / event. */
 export default function CommentSection({ activityId, target }: { activityId: string; target: Target }) {
-  const [open, setOpen] = useState(false);
   const api = useApi();
 
   const params = new URLSearchParams(
     Object.entries(target).map(([k, v]) => [k, String(v)]),
   ).toString();
 
+  // one fetch returns the whole tree (replies inherit the target); nest by parent_id
   const commentsQ = useQuery({
     queryKey: ["comments", activityId, params],
     queryFn: () => api.get<Comment[]>(`/activities/${activityId}/comments/?${params}`, activityId),
-    enabled: open,
   });
 
-  return (
-    <section className="border-t pt-4">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ChevronRight className={`size-4 transition-transform ${open ? "rotate-90" : ""}`} />
-        Comments
-      </button>
+  const byParent = useMemo(() => {
+    const map = new Map<number | null, Comment[]>();
+    for (const c of commentsQ.data ?? []) {
+      map.set(c.parent_id, [...(map.get(c.parent_id) ?? []), c]);
+    }
+    return map;
+  }, [commentsQ.data]);
 
-      {open && (
-        <div className="mt-3 flex flex-col gap-3">
-          {commentsQ.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
-          {commentsQ.data?.length === 0 && (
-            <p className="text-sm text-muted-foreground">No comments yet.</p>
-          )}
-          {commentsQ.data?.map((c) => (
-            <CommentItem key={c.id} comment={c} activityId={activityId} />
-          ))}
-          <Composer activityId={activityId} target={target} />
-        </div>
+  const roots = byParent.get(null) ?? [];
+
+  return (
+    <section className="flex flex-col gap-3">
+      <Separator />
+      <h2 className="text-sm font-medium">
+        Comments{commentsQ.data && commentsQ.data.length > 0 ? ` (${commentsQ.data.length})` : ""}
+      </h2>
+      {commentsQ.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {roots.length === 0 && commentsQ.isSuccess && (
+        <Empty className="p-4">
+          <EmptyHeader>
+            <EmptyDescription>No comments yet.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
+      {roots.map((c) => (
+        <CommentNode key={c.id} comment={c} byParent={byParent} activityId={activityId} />
+      ))}
+      <Composer activityId={activityId} target={target} />
     </section>
   );
 }
 
-function CommentItem({ comment, activityId }: { comment: Comment; activityId: string }) {
+function CommentNode({
+  comment,
+  byParent,
+  activityId,
+}: {
+  comment: Comment;
+  byParent: Map<number | null, Comment[]>;
+  activityId: string;
+}) {
   const api = useApi();
   const qc = useQueryClient();
-  const [showReplies, setShowReplies] = useState(false);
   const [replying, setReplying] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  const children = byParent.get(comment.id) ?? [];
+  const deleted = !!comment.deleted_at;
 
   const deleteMut = useMutation({
-    mutationFn: (commentId: number) => api.del(`/activities/${activityId}/comments/${commentId}/`, activityId),
+    mutationFn: () => api.del(`/activities/${activityId}/comments/${comment.id}/`, activityId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", activityId] }),
   });
-  const confirmDelete = (commentId: number) =>
-    window.confirm("Delete this comment for everyone?") && deleteMut.mutate(commentId);
-
-  const repliesQ = useQuery({
-    queryKey: ["comments", activityId, `parent=${comment.id}`],
-    queryFn: () => api.get<Comment[]>(`/activities/${activityId}/comments/?parent=${comment.id}`, activityId),
-    enabled: showReplies,
-  });
-
-  const deleted = !!comment.deleted_at;
 
   return (
     <div className="flex flex-col gap-1">
@@ -81,48 +90,40 @@ function CommentItem({ comment, activityId }: { comment: Comment; activityId: st
         {deleted ? "Deleted." : comment.body}
       </p>
       <div className="flex gap-3 text-xs text-muted-foreground">
-        {comment.reply_count > 0 && (
-          <button className="hover:text-foreground" onClick={() => setShowReplies((v) => !v)}>
-            {showReplies ? "Hide replies" : `${comment.reply_count} repl${comment.reply_count === 1 ? "y" : "ies"}`}
-          </button>
-        )}
         {!deleted && (
           <>
             <button className="hover:text-foreground" onClick={() => setReplying((v) => !v)}>
               Reply
             </button>
-            <button className="hover:text-destructive" onClick={() => confirmDelete(comment.id)}>
-              Delete
-            </button>
+            <ConfirmDelete
+              title="Delete this comment?"
+              description="It's deleted for everyone. Replies stay."
+              onConfirm={() => deleteMut.mutate()}
+              trigger={<button className="hover:text-destructive">Delete</button>}
+            />
           </>
+        )}
+        {children.length > 0 && (
+          <button className="hover:text-foreground" onClick={() => setCollapsed((v) => !v)}>
+            {collapsed ? `Show ${children.length} repl${children.length === 1 ? "y" : "ies"}` : "Hide replies"}
+          </button>
         )}
       </div>
 
-      {(showReplies || replying) && (
-        <div className="ml-4 border-l pl-3 mt-1 flex flex-col gap-2">
-          {showReplies &&
-            repliesQ.data?.map((r) => (
-              <div key={r.id}>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-medium">{r.member?.display_name ?? "someone"}</span>
-                  <span className="text-xs text-muted-foreground">{timeAgo(r.created_at)}</span>
-                </div>
-                <p className={`text-sm ${r.deleted_at ? "text-muted-foreground italic" : ""}`}>
-                  {r.deleted_at ? "Deleted." : r.body}
-                </p>
-              </div>
-            ))}
+      {(replying || (!collapsed && children.length > 0)) && (
+        <div className="ml-3 border-l pl-3 mt-1 flex flex-col gap-3">
           {replying && (
             <Composer
               activityId={activityId}
               target={{}}
               parentId={comment.id}
-              onDone={() => {
-                setReplying(false);
-                setShowReplies(true);
-              }}
+              onDone={() => setReplying(false)}
             />
           )}
+          {!collapsed &&
+            children.map((c) => (
+              <CommentNode key={c.id} comment={c} byParent={byParent} activityId={activityId} />
+            ))}
         </div>
       )}
     </div>
@@ -154,8 +155,10 @@ function Composer({
     onSuccess: () => {
       setBody("");
       qc.invalidateQueries({ queryKey: ["comments", activityId] });
+      qc.invalidateQueries({ queryKey: ["feed", activityId] });
       onDone?.();
     },
+    onError: () => toast.error("Couldn't post your comment — try again."),
   });
 
   return (
@@ -164,6 +167,7 @@ function Composer({
         className="flex-1"
         placeholder={parentId ? "Reply…" : "Add a comment…"}
         value={body}
+        autoFocus={!!parentId}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && body.trim() && mutation.mutate()}
       />

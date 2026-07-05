@@ -18,7 +18,7 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            "id", "cycle_id", "proposal_id",
+            "id", "cycle_id", "poll_id",
             "date", "time_start", "time_end", "note",
             "created_by", "rsvps", "created_at",
         ]

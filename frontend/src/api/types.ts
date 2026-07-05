@@ -44,9 +44,20 @@ export type Comment = {
   body: string;
   parent_id: number | null;
   poll_id: number | null;
-  proposal_id: number | null;
   event_id: number | null;
   reply_count: number;
+  created_at: string;
+  deleted_at: string | null;
+};
+
+export type PollKind = "choice" | "date" | "datetime" | "range";
+
+export type PollOption = {
+  id: number;
+  label: string;
+  created_by: Member | null;
+  voters: { id: string; display_name: string }[];
+  my_vote: boolean;
   created_at: string;
   deleted_at: string | null;
 };
@@ -54,11 +65,20 @@ export type Comment = {
 export type Poll = {
   id: number;
   cycle_id: number | null;
+  kind: PollKind;
+  allow_multiple: boolean;
   title: string;
   created_by: Member | null;
   voter_count: number;
-  /** Requesting member's own participation — only present in the feed. */
+  /** Requesting member's own participation — date-based kinds only. */
   my_vote: { voted: boolean; has_date: boolean; has_time: boolean } | null;
+  /** Choice polls only. */
+  options: PollOption[] | null;
+  /** Date/range polls only — everyone's votes, for the feed-card calendar. */
+  slots: Slot[] | null;
+  comment_count: number;
+  /** Newest top-level comments, oldest first. */
+  latest_comments: Comment[];
   created_at: string;
   deleted_at: string | null;
 };
@@ -68,32 +88,11 @@ export type Slot = {
   member: Member;
   status: "yes" | "maybe" | "no";
   date: string | null;
+  /** Range polls: inclusive end of a from–to vote. */
+  date_end: string | null;
   time_start: string | null;
   time_end: string | null;
   note: string;
-  created_at: string;
-  deleted_at: string | null;
-};
-
-export type ProposalVote = {
-  id: number;
-  member: Member;
-  status: "yes" | "maybe" | "no";
-  comment: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-};
-
-export type Proposal = {
-  id: number;
-  cycle_id: number | null;
-  poll_id: number | null;
-  proposed_date: string;
-  proposed_time: string | null;
-  note: string;
-  created_by: Member | null;
-  votes: ProposalVote[];
   created_at: string;
   deleted_at: string | null;
 };
@@ -110,7 +109,7 @@ export type RSVP = {
 export type Event = {
   id: number;
   cycle_id: number | null;
-  proposal_id: number | null;
+  poll_id: number | null;
   date: string;
   time_start: string | null;
   time_end: string | null;
@@ -123,7 +122,6 @@ export type Event = {
 export type FeedItem =
   | { type: "cycle"; created_at: string; data: Cycle }
   | { type: "poll"; created_at: string; data: Poll }
-  | { type: "proposal"; created_at: string; data: Proposal }
   | { type: "event"; created_at: string; data: Event }
   | { type: "comment"; created_at: string; data: Comment }
   | { type: "log"; created_at: string; data: Log };

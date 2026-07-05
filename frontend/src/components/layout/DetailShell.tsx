@@ -4,7 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { useActivity } from "@/hooks/useActivity";
 
 /**
- * Shared layout for poll / proposal / event detail pages.
+ * Shared layout for poll / event detail pages.
  * Fetches the activity, redirects non-members to the join screen,
  * renders a sticky back-header. Children do their own data fetching.
  */

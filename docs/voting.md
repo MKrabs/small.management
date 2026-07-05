@@ -1,33 +1,39 @@
 ---
 type: Product Doc
-description: Poll and proposal voting model, heatmap rules, and finalizing.
+description: Voting models per poll kind, heatmap rules, and finalizing.
 ---
 
 # Voting
 
-## Poll Voting Model
+## Choice Polls
 
-Members express availability at the day level, with optional time range and note. This is Option B: day-level votes with time annotations.
+Options with votes. Single-choice polls replace the member's previous vote when they pick another option; multiple-choice polls (`allow_multiple`) accumulate. Any member can add options after creation. Votes are hard-deleted on unvote (no retraction history).
 
-Each vote entry has:
+UI: exactly two options render as two big side-by-side buttons with voter avatars beneath; three or more render as rows with proportional bars, counts, and avatar chips.
+
+## Date & Range Polls (binary)
+
+Selected = available. No maybe/no, no time ranges.
+
+- **Date polls**: each selected day is one vote (a Slot with `date`, status forced to `yes`). Tap toggles a day, dragging paints several days at once.
+- **Range polls**: each vote is one from–to span (Slot `date` + `date_end`). Dragging creates a range, a tap creates a single-day range, and a member can have several ranges. Tapping an endpoint of an own range activates it — the next calendar tap moves that endpoint.
+
+The calendar tints days by how many members cover them and shows the count in the cell.
+
+## Date+Time Polls (tri-state)
+
+The classic availability model. Members express availability at the day level, with optional time range and note. Each vote entry has:
+
 - **Status** — `yes` / `maybe` / `no` (enum, not a number)
-- **Day** — a specific date (optional; omitting means "general yes/maybe/no")
+- **Day** — a specific date (required)
 - **Time range** — a start and end time within the day, 30-minute resolution (optional)
 - **Note** — free text (optional)
 
-One day can have multiple entries with different statuses (e.g., `no` before 17h, `maybe` 17h–19h30, `yes` after 20h).
+One day can have multiple entries with different statuses (e.g., `no` before 17h, `maybe` 17h–19h30, `yes` after 20h). The general no-date vote was dropped.
 
-## General Yes / No
+## Heatmap (date+time polls)
 
-A vote with no date specified is a general statement of intent. It counts toward the member count but does not appear on the heatmap. Members who submit only a general vote are nudged (not forced) to add specific dates.
-
-## Heatmap
-
-The group overview shows raw vote counts per day and time slot. Darker = more people available.
-
-- Only day/time-specific votes appear on the heatmap
-- No "of X members" framing — the count shown is simply how many voted for that slot
-- General yes/no voters are invisible on the heatmap
+The group overview shows raw vote counts per day and time slot. Darker = more people available. No "of X members" framing — the count shown is simply how many voted for that slot.
 
 Day colors in the monthly calendar (slot editor):
 
@@ -42,12 +48,8 @@ Day colors in the monthly calendar (slot editor):
 
 ## Retracting a Vote
 
-Any member can fully retract their vote at any time. Retractions are logged as a destructive action.
-
-## Proposal Voting
-
-Proposals are voted on separately with a simpler model: `yes` / `maybe` / `no` + optional comment. No time ranges — the proposal already has a fixed date and time.
+Any member can fully retract their vote at any time. Slot retractions are logged as a destructive action.
 
 ## Finalizing
 
-Any member can finalize a proposal into an Event at any time, regardless of vote counts or thresholds. First member to act wins. The log records who did it.
+Any member can finalize any poll into an Event at any time, regardless of vote counts or thresholds: pick the winning date (plus optional time and note). First member to act wins. The log records who did it.

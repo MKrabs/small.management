@@ -3,10 +3,10 @@
 ## Product
 
 * [Overview](overview.md) - What small.management is, its positioning, licensing, and core product principles.
-* [Structure](structure.md) - Entity hierarchy (Activity → Poll/Proposal/Event) and the planning loop.
+* [Structure](structure.md) - Entity hierarchy (Activity → Poll/Event) and the planning loop.
 * [Governance](governance.md) - The no-admin model, soft delete, and the activity log.
 * [Membership](membership.md) - How members join, anonymous vs. logged-in identity, and PIN protection.
-* [Voting](voting.md) - Poll and proposal voting model, heatmap rules, and finalizing.
+* [Voting](voting.md) - Voting models per poll kind, heatmap rules, and finalizing.
 * [Deferred Features](future.md) - Features explicitly deferred past v1, so they don't get forgotten.
 
 ## Screens
@@ -17,7 +17,6 @@
 * [Activity View](screens/activity-view.md) - The main hub members return to for everything.
 * [Poll View](screens/poll-view.md) - Sharing availability and seeing the group's collective picture.
 * [Slot Editor](screens/slot-editor.md) - The mobile-first availability entry component.
-* [Proposal View](screens/proposal-view.md) - A specific date+time others vote on and can finalize.
 * [Event View](screens/event-view.md) - The fixed outcome — RSVP, share the date, close the loop.
 * [Account Screens](screens/accounts.md) - Optional accounts — persistent identity and activity list.
 

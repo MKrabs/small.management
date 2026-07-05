@@ -19,9 +19,7 @@ The main hub. Members land here after joining and return here for everything.
 │                             │
 │  [ Cycle fold ]  ← older   │
 │  [ Event card ]             │
-│  [ Proposal card ]          │
 │  [ Comment card ]           │
-│  [ Proposal card ]          │
 │  [ Poll card ]   ← newest  │
 │                             │
 └─────────────────────────────┘
@@ -40,21 +38,20 @@ Max-width reading width. Centered. Responsive.
 
 ## Feed
 
-Reverse-chronological. Four card types plus log entries and cycle folds.
+Reverse-chronological. Three card types plus log entries and cycle folds. Poll cards are **interactive** — members vote without leaving the feed.
 
-### Poll Card
-- Label: "Poll" + creation date
-- Created by · timestamp
-- Participation count: "4 of 6 have shared availability"
-- Member's current vote status in the corner: `✓ yes · – date · – time` (yes in blue, missing fields in grey)
-- CTA: "Vote" / "Edit vote" → opens Poll view
+### Poll Card (all kinds)
+- Kind label ("Poll" / "Day poll" / "Date range poll" / "Day & time poll") + title
+- Participation count: "4 of 6 voted" · created by · timestamp
+- Latest 3 top-level comments, read-only, with "View all N comments"
+- Tapping title or comments opens the Poll view
+- Soft-deleted state: greyed out, struck through, voting removed
 
-### Proposal Card
-- Label: "Proposal" + proposed date+time
-- Proposed by · timestamp
-- Vote tally: yes · maybe · no counts
-- CTA: "Vote" + "Set as Event" (any member, always visible)
-- Soft-deleted state: greyed out, struck through
+Per kind:
+- **Choice** — vote directly on the card: two big side-by-side buttons with voter avatars beneath (2 options) or bar rows with counts and avatar chips (3+). Anyone can add an option from the card.
+- **Date** — a month calendar on the card: tap toggles a day, drag paints several days. Cells tint by group count.
+- **Range** — the same calendar: drag creates a from–to vote, tap a single-day vote; own ranges listed as pills with endpoint moving and delete.
+- **Date+time** — summary card only (own vote status in the corner); voting happens on the Poll view.
 
 ### Event Card
 - Most visually prominent card
@@ -71,7 +68,7 @@ Reverse-chronological. Four card types plus log entries and cycle folds.
 
 ### Log Entry (when toggle is on)
 - Single line of text between cards
-- Example: `Alex set proposal #2 as deleted · 3h ago`
+- Example: `Alex set poll #2 as deleted · 3h ago`
 - Not a card — styled as a subtle separator
 
 ### Cycle Fold
@@ -82,11 +79,10 @@ Reverse-chronological. Four card types plus log entries and cycle folds.
 ## Sticky Bottom: + Button
 
 Opens a large bottom sheet with actions:
-- New Poll
-- New Proposal
+- New Poll (choice / day / date range / day & time)
 - New Comment
 - Start New Cycle (available at any time, prominent after an event has passed)
 
 ## Empty State
 
-No nudge. If a poll exists, the poll card's "Vote" CTA is the only affordance needed. If the feed is truly empty (just created), the `+` button is the only affordance.
+No nudge. If a poll exists, its card is directly votable. If the feed is truly empty (just created), the `+` button is the only affordance.

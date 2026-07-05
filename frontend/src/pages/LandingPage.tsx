@@ -5,7 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, User } from "@/api/types";
+import UserAvatar from "@/components/UserAvatar";
 import { buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
+import { cn } from "@/lib/utils";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -21,19 +26,10 @@ function LoggedInHome({ user }: { user: User }) {
     queryFn: () => api.get<Activity[]>("/activities/"),
   });
 
-  const initials = user.display_name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-8">
       <div className="flex items-center gap-4">
-        <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-lg select-none shrink-0">
-          {initials}
-        </div>
+        <UserAvatar name={user.display_name} className="size-12" textClassName="text-lg" />
         <div>
           <p className="font-semibold">{user.display_name}</p>
           <p className="text-xs text-muted-foreground">
@@ -59,12 +55,14 @@ function LoggedInHome({ user }: { user: User }) {
         )}
 
         {activitiesQ.data?.length === 0 && (
-          <div className="border border-dashed rounded-lg p-8 text-center flex flex-col gap-2">
-            <p className="text-muted-foreground text-sm">No activities yet.</p>
-            <Link to="/new" className="text-sm underline underline-offset-2">
-              Create your first one
-            </Link>
-          </div>
+          <Empty className="border border-dashed p-8">
+            <EmptyHeader>
+              <EmptyTitle className="text-muted-foreground font-normal">No activities yet.</EmptyTitle>
+              <EmptyDescription>
+                <Link to="/new">Create your first one</Link>
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
 
         {activitiesQ.data && activitiesQ.data.length > 0 && (
@@ -73,10 +71,10 @@ function LoggedInHome({ user }: { user: User }) {
               <li key={a.id}>
                 <Link
                   to={`/activity/${a.short_id}/${a.slug}`}
-                  className="flex items-center justify-between border rounded-lg px-4 py-3 hover:bg-muted transition-colors"
+                  className="flex items-center justify-between gap-3 border rounded-lg bg-card px-4 py-3 hover:bg-muted transition-colors"
                 >
-                  <span className="font-medium">{a.title}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="font-medium truncate">{a.title}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">
                     {a.member_count} member{a.member_count !== 1 ? "s" : ""}
                   </span>
                 </Link>
@@ -113,7 +111,7 @@ function MarketingHome() {
             <p className="text-muted-foreground text-lg leading-relaxed">
               <strong className="text-foreground font-bold">Plan events</strong>{" "}
               with your people.{" "}
-              <Squiggle>Polls, proposals and decisions</Squiggle> — no accounts
+              <Squiggle>Polls, dates and decisions</Squiggle> — no accounts
               required, nothing tracked.
             </p>
           </div>
@@ -179,14 +177,7 @@ function Squiggle({ children }: { children: React.ReactNode }) {
 
 // ─── Demo components (local state, no API) ────────────────────────────────────
 
-type Vote = "yes" | "maybe" | "no";
-
-const VOTE_STYLES: Record<Vote, string> = {
-  yes: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400",
-  maybe:
-    "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400",
-  no: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400",
-};
+type Vote = VoteStatus;
 
 function VoteBar({
   yes,
@@ -226,9 +217,6 @@ function DemoPoll() {
   ] as const;
   const [votes, setVotes] = useState<Record<number, Vote | null>>({});
 
-  const toggle = (id: number, v: Vote) =>
-    setVotes((p) => ({ ...p, [id]: p[id] === v ? null : v }));
-
   return (
     <div className="border rounded-lg p-4 flex flex-col gap-3">
       <div>
@@ -250,25 +238,30 @@ function DemoPoll() {
             <div key={slot.id}>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm">{slot.label}</span>
-                <div className="flex gap-1 shrink-0">
+                <ToggleGroup
+                  value={my ? [my] : []}
+                  onValueChange={(v) =>
+                    setVotes((p) => ({ ...p, [slot.id]: (v[0] as Vote) ?? null }))
+                  }
+                  variant="outline"
+                  size="sm"
+                  spacing={1}
+                  className="shrink-0"
+                >
                   {(["yes", "maybe", "no"] as const).map((v) => (
-                    <button
+                    <ToggleGroupItem
                       key={v}
-                      onClick={() => toggle(slot.id, v)}
-                      className={`text-xs px-2 py-0.5 rounded border transition-colors ${
-                        my === v
-                          ? VOTE_STYLES[v]
-                          : "border-border hover:bg-muted"
-                      }`}
+                      value={v}
+                      className={cn("text-xs", STATUS_TOGGLE[v])}
                     >
                       {v === "yes"
                         ? `✓ ${yes}`
                         : v === "maybe"
                           ? `~ ${maybe}`
                           : `✗ ${no}`}
-                    </button>
+                    </ToggleGroupItem>
                   ))}
-                </div>
+                </ToggleGroup>
               </div>
               <VoteBar
                 yes={yes}
@@ -296,11 +289,11 @@ function DemoProposal() {
       <div className="flex items-start justify-between gap-2">
         <div>
           <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Proposal
+            Poll
           </span>
-          <h3 className="font-medium">Saturday, Aug 9</h3>
+          <h3 className="font-medium">Saturday, Aug 9?</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            proposed by Jordan · from poll results
+            suggested by Jordan · from the calendar votes
           </p>
         </div>
         <div className="flex gap-2 text-xs shrink-0 mt-1">
@@ -310,19 +303,18 @@ function DemoProposal() {
         </div>
       </div>
       <VoteBar yes={yes} maybe={maybe} no={no} total={yes + maybe + no} />
-      <div className="flex gap-2 flex-wrap">
+      <ToggleGroup
+        value={myVote ? [myVote] : []}
+        onValueChange={(v) => setMyVote((v[0] as Vote) ?? null)}
+        variant="outline"
+        className="flex-wrap"
+      >
         {(["yes", "maybe", "no"] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setMyVote(myVote === v ? null : v)}
-            className={`text-sm px-3 py-1 rounded-md border transition-colors ${
-              myVote === v ? VOTE_STYLES[v] : "border-border hover:bg-muted"
-            }`}
-          >
+          <ToggleGroupItem key={v} value={v} className={cn("font-normal", STATUS_TOGGLE[v])}>
             {v === "yes" ? "I'm in" : v === "maybe" ? "Maybe" : "Can't make it"}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
     </div>
   );
 }
@@ -351,29 +343,29 @@ function DemoEvent() {
         <span className="text-yellow-600">{maybe} maybe</span>
         <span className="text-muted-foreground">{not_going} not going</span>
       </div>
-      <div className="flex gap-2 flex-wrap">
+      <ToggleGroup
+        value={rsvp ? [rsvp] : []}
+        onValueChange={(v) => setRsvp((v[0] as RSVP) ?? null)}
+        variant="outline"
+        className="flex-wrap"
+      >
         {(["going", "maybe", "not_going"] as const).map((v) => (
-          <button
+          <ToggleGroupItem
             key={v}
-            onClick={() => setRsvp(rsvp === v ? null : v)}
-            className={`text-sm px-3 py-1 rounded-md border transition-colors ${
-              rsvp === v
-                ? v === "going"
-                  ? VOTE_STYLES.yes
-                  : v === "maybe"
-                    ? VOTE_STYLES.maybe
-                    : VOTE_STYLES.no
-                : "border-border hover:bg-muted"
-            }`}
+            value={v}
+            className={cn(
+              "font-normal",
+              STATUS_TOGGLE[v === "going" ? "yes" : v === "maybe" ? "maybe" : "no"],
+            )}
           >
             {v === "going"
               ? "Going"
               : v === "maybe"
                 ? "Maybe"
                 : "Can't make it"}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
     </div>
   );
 }
