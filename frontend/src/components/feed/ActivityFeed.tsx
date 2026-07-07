@@ -136,6 +136,7 @@ function logText(log: Log): string {
     case "voted_proposal": return `voted ${d.status} on a proposal`;
     case "finalized_proposal": return "set a proposal as event";
     case "rsvp": return `RSVP'd ${d.status?.replace("_", " ")}`;
+    case "retracted_rsvp": return "retracted an RSVP";
     case "created_comment": return "commented";
     case "removed_option": return `removed option “${d.label}”${Number(d.votes) > 0 ? ` (${d.votes} vote${Number(d.votes) !== 1 ? "s" : ""} invalidated)` : ""}`;
     case "archived": return `archived a ${d.target}`;

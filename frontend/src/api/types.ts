@@ -121,6 +121,9 @@ export type Event = {
   note: string;
   created_by: Member | null;
   rsvps: RSVP[];
+  comment_count: number;
+  /** Newest comments (replies included), oldest first. */
+  latest_comments: Comment[];
   created_at: string;
   deleted_at: string | null;
 };

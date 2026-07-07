@@ -83,3 +83,18 @@ class CommentSerializer(serializers.ModelSerializer):
             "poll_id", "event_id",
             "reply_count", "created_at", "deleted_at",
         ]
+
+
+FEED_COMMENT_COUNT = 3
+
+
+class LatestCommentsMixin:
+    """comment_count + the newest few comments (replies included) for feed-card previews."""
+
+    def get_comment_count(self, obj):
+        return obj.comments.filter(deleted_at__isnull=True).count()
+
+    def get_latest_comments(self, obj):
+        qs = obj.comments.filter(deleted_at__isnull=True).select_related("member")
+        newest = list(qs.order_by("-created_at")[:FEED_COMMENT_COUNT])
+        return CommentSerializer(reversed(newest), many=True).data

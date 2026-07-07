@@ -1,78 +1,133 @@
-import { Link } from "react-router-dom";
-import { Pie, PieChart } from "recharts";
-import type { Event } from "@/api/types";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
-import { cn, formatDay, formatTime, isEventPast } from "@/lib/utils";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { CalendarPlus } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
+import { useActivity } from "@/hooks/useActivity";
+import type { Event, RSVP } from "@/api/types";
+import { AvatarRow } from "@/components/poll/ChoicePoll";
+import { Button } from "@/components/ui/button";
+import FeedCard from "./FeedCard";
+import CommentPreview from "./CommentPreview";
+import { cn, downloadIcs, formatDay, formatTime, isEventPast } from "@/lib/utils";
 
 type Props = { event: Event; activityId: string };
+type RsvpStatus = RSVP["status"];
 
-const chartConfig = {
-  count: { label: "RSVPs" },
-  going: { label: "Going", color: "var(--color-green-600)" },
-  maybe: { label: "Maybe", color: "var(--color-yellow-500)" },
-  not_going: { label: "Not going", color: "var(--color-red-500)" },
-} satisfies ChartConfig;
+const ROWS: { status: RsvpStatus; icon: string; label: string; bar: string; selected: string }[] = [
+  { status: "going", icon: "✓", label: "going", bar: "bg-green-600", selected: "bg-green-100 text-green-700 border-green-300" },
+  { status: "maybe", icon: "~", label: "maybe", bar: "bg-yellow-500", selected: "bg-yellow-100 text-yellow-700 border-yellow-300" },
+  { status: "not_going", icon: "✗", label: "not going", bar: "bg-red-500", selected: "bg-red-100 text-red-700 border-red-300" },
+];
 
-export default function EventCard({ event }: Props) {
-  const going = event.rsvps.filter((r) => r.status === "going").length;
-  const maybe = event.rsvps.filter((r) => r.status === "maybe").length;
-  const notGoing = event.rsvps.filter((r) => r.status === "not_going").length;
+/** Feed card: when + what on the left, per-status RSVP bars with voters and vote buttons on the right. */
+export default function EventCard({ event, activityId }: Props) {
+  const api = useApi();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { activity } = useActivity();
+  const myRsvp = event.rsvps.find((r) => r.member.id === activity?.me?.id);
   const past = isEventPast(event.date);
   const archived = !!event.deleted_at;
 
-  const chartData = [
-    { status: "going", count: going, fill: "var(--color-going)" },
-    { status: "maybe", count: maybe, fill: "var(--color-maybe)" },
-    { status: "not_going", count: notGoing, fill: "var(--color-not_going)" },
-  ];
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["feed", activityId] });
+    qc.invalidateQueries({ queryKey: ["event", activityId, String(event.id)] });
+  };
+  const rsvpMut = useMutation({
+    mutationFn: (status: RsvpStatus) =>
+      // keep any comment the member set before the RSVP form was retired
+      api.put(`/activities/${activityId}/events/${event.id}/rsvps/`, { status, comment: myRsvp?.comment ?? "" }, activityId),
+    onSuccess: invalidate,
+    onError: () => toast.error("Couldn't save your RSVP — try again."),
+  });
+  const retractMut = useMutation({
+    mutationFn: () => api.del(`/activities/${activityId}/events/${event.id}/rsvps/`, activityId),
+    onSuccess: invalidate,
+    onError: () => toast.error("Couldn't remove your RSVP — try again."),
+  });
+
+  const byStatus = (s: RsvpStatus) => event.rsvps.filter((r) => r.status === s);
+  const max = Math.max(1, ...ROWS.map((r) => byStatus(r.status).length));
+  const busy = rsvpMut.isPending || retractMut.isPending;
 
   return (
-    <Link
-      to={`event/${event.id}`}
-      className={cn(
-        "block shadow-md rounded-lg p-4 text-center transition-colors",
-        archived && "bg-card opacity-40",
-        !archived && (past ? "bg-card opacity-60 hover:bg-muted/50" : "bg-primary/5 hover:bg-primary/10"),
-      )}
+    <FeedCard
+      type="Event"
+      marker
+      suffix={archived ? "archived" : undefined}
+      onOpen={() => navigate(`event/${event.id}`)}
+      archived={archived}
+      className={!archived && past ? "opacity-60" : undefined}
     >
-      <span className="text-xs text-muted-foreground uppercase tracking-wide">
-        Event{archived && " · archived"}
-      </span>
-      <h3 className={cn("text-lg font-semibold", archived && "line-through")}>
-        {formatDay(event.date, { weekday: "long", month: "long", day: "numeric" })}
-        {event.time_start && (
-          <span className="text-muted-foreground font-normal"> · {formatTime(event.time_start)}</span>
-        )}
-      </h3>
-      {event.note && <p className="text-sm mt-1">{event.note}</p>}
-      {going + maybe + notGoing > 0 && (
-        <ChartContainer config={chartConfig} className="mx-auto mt-2 aspect-[2/1] w-40">
-          <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Pie
-              data={chartData}
-              dataKey="count"
-              nameKey="status"
-              startAngle={180}
-              endAngle={0}
-              innerRadius={35}
-              outerRadius={55}
-              cy="80%"
-            />
-          </PieChart>
-        </ChartContainer>
-      )}
-      <div className="text-xs flex justify-center gap-3 mt-2">
-        <span className="text-green-600">✓ {going} going</span>
-        <span className="text-yellow-600">~ {maybe} maybe</span>
-        <span className="text-red-500">✗ {notGoing} not going</span>
+      <div className="flex gap-4">
+        {/* when + what */}
+        <div className="flex-1 min-w-0 flex flex-col items-start gap-1">
+          <Link to={`event/${event.id}`} className="block hover:opacity-80 transition-opacity">
+            <h3 className={cn("text-lg font-bold leading-tight", archived && "line-through")}>
+              {formatDay(event.date, { weekday: "long", day: "numeric", month: "long" })}
+            </h3>
+            {event.time_start && (
+              <p className="text-lg font-bold leading-tight">
+                {formatTime(event.time_start)}
+                {event.time_end && ` – ${formatTime(event.time_end)}`}
+              </p>
+            )}
+            {event.note && <p className="text-sm text-muted-foreground mt-1">{event.note}</p>}
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-1"
+            onClick={() => downloadIcs(event, activity?.title ?? "Event")}
+          >
+            <CalendarPlus data-icon="inline-start" />
+            Add to calendar
+          </Button>
+        </div>
+
+        {/* RSVP bars — tap a status button to vote, tap again to retract */}
+        <div className="w-36 shrink-0 flex flex-col justify-center gap-2.5">
+          {ROWS.map(({ status, icon, label, bar, selected }) => {
+            const voters = byStatus(status);
+            const mine = myRsvp?.status === status;
+            return (
+              <div key={status} className="flex items-center gap-2">
+                <div className="flex-1 flex flex-col gap-1">
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full ml-auto", bar)}
+                      style={{ width: `${(voters.length / max) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <AvatarRow voters={voters.map((r) => ({ id: r.member.id, display_name: r.member.display_name }))} />
+                  </div>
+                </div>
+                <button
+                  disabled={archived || busy}
+                  onClick={() => (mine ? retractMut.mutate() : rsvpMut.mutate(status))}
+                  aria-label={mine ? `Retract RSVP ${label}` : `RSVP ${label}`}
+                  className={cn(
+                    "size-7 shrink-0 rounded-full border text-xs font-semibold transition-colors",
+                    mine ? selected : "text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  {icon}
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
-      {past && <p className="text-xs text-muted-foreground mt-2">This event has passed.</p>}
-    </Link>
+
+      {past && <p className="text-xs text-muted-foreground">This event has passed.</p>}
+
+      {event.comment_count > 0 && (
+        <button onClick={() => navigate(`event/${event.id}`)} className="text-left">
+          <CommentPreview comments={event.latest_comments} total={event.comment_count} />
+        </button>
+      )}
+    </FeedCard>
   );
 }

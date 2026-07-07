@@ -1,8 +1,6 @@
 from rest_framework import serializers
-from apps.activities.serializers import MemberSerializer, CommentSerializer
+from apps.activities.serializers import MemberSerializer, LatestCommentsMixin
 from .models import Poll, PollKind, Option, Slot
-
-FEED_COMMENT_COUNT = 3
 
 
 class SlotSerializer(serializers.ModelSerializer):
@@ -35,7 +33,7 @@ class OptionSerializer(serializers.ModelSerializer):
         fields = ["id", "label", "created_by", "voters", "my_vote", "created_at", "deleted_at"]
 
 
-class PollSerializer(serializers.ModelSerializer):
+class PollSerializer(LatestCommentsMixin, serializers.ModelSerializer):
     created_by = MemberSerializer(read_only=True)
     voter_count = serializers.SerializerMethodField()
     my_vote = serializers.SerializerMethodField()
@@ -78,14 +76,6 @@ class PollSerializer(serializers.ModelSerializer):
             return None
         qs = obj.slots.filter(deleted_at__isnull=True).select_related("member")
         return SlotSerializer(qs, many=True).data
-
-    def get_comment_count(self, obj):
-        return obj.comments.filter(deleted_at__isnull=True).count()
-
-    def get_latest_comments(self, obj):
-        qs = obj.comments.filter(parent=None, deleted_at__isnull=True).select_related("member")
-        newest = list(qs.order_by("-created_at")[:FEED_COMMENT_COUNT])
-        return CommentSerializer(reversed(newest), many=True).data
 
     class Meta:
         model = Poll
