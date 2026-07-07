@@ -92,7 +92,7 @@ export default function ActivityPage() {
             />
             <MenuAction
               icon={<MessageSquare className="size-5" />}
-              title="New comment"
+              title="New thread"
               hint="Say something to the group"
               onClick={() => setSheet("comment")}
             />

@@ -243,6 +243,20 @@ class CommentListCreateView(ActivityMixin, APIView):
         if parent_id:
             qs = self.get_activity().comments.filter(parent_id=parent_id).select_related("member")
             return Response(CommentSerializer(qs, many=True).data)
+        thread_id = request.query_params.get("thread")
+        if thread_id:
+            # whole reply subtree below one standalone comment; replies inherit
+            # poll=None/event=None, so nest the small standalone set in memory
+            nodes = self.get_activity().comments.filter(poll=None, event=None).select_related("member")
+            by_parent = {}
+            for c in nodes:
+                by_parent.setdefault(c.parent_id, []).append(c)
+            result, stack = [], [int(thread_id)]
+            while stack:
+                for c in by_parent.get(stack.pop(), []):
+                    result.append(c)
+                    stack.append(c.id)
+            return Response(CommentSerializer(result, many=True).data)
         qs = self.get_activity().comments.select_related("member")
         poll_id = request.query_params.get("poll")
         event_id = request.query_params.get("event")

@@ -72,7 +72,7 @@ function Cards({ items, activityId, memberCount }: { items: FeedItem[]; activity
           case "event":
             return <EventCard key={`event-${item.data.id}`} event={item.data} activityId={activityId} />;
           case "comment":
-            return <CommentCard key={`comment-${item.data.id}`} comment={item.data} />;
+            return <CommentCard key={`comment-${item.data.id}`} comment={item.data} activityId={activityId} />;
           case "log":
             return <LogLine key={`log-${item.data.id}`} log={item.data} />;
           default:

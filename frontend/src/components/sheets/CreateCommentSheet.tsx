@@ -13,7 +13,7 @@ type Props = {
   onCreated: () => void;
 };
 
-/** Standalone comment in the activity feed (not attached to a card). */
+/** Standalone thread in the activity feed (not attached to a card). */
 export default function CreateCommentSheet({ activityId, onClose, onCreated }: Props) {
   const api = useApi();
   const [body, setBody] = useState("");
@@ -25,8 +25,8 @@ export default function CreateCommentSheet({ activityId, onClose, onCreated }: P
   });
 
   return (
-    <BottomSheet onClose={onClose} title="New comment">
-      <h2 className="font-semibold text-lg">New comment</h2>
+    <BottomSheet onClose={onClose} title="New thread">
+      <h2 className="font-semibold text-lg">New thread</h2>
       <Textarea
         className="min-h-24 resize-none"
         placeholder="Say something to the group…"
