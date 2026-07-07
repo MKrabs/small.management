@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn, isWarning, timeAgo } from "@/lib/utils";
 
-type Target = { poll?: number; event?: number };
+type Target = { poll?: number; event?: number; thread?: number };
 
-/** Reddit-style comment tree attached to a poll / event. */
+/** Reddit-style comment tree attached to a poll / event / standalone thread. */
 export default function CommentSection({ activityId, target }: { activityId: string; target: Target }) {
   const api = useApi();
 
@@ -34,26 +34,28 @@ export default function CommentSection({ activityId, target }: { activityId: str
     return map;
   }, [commentsQ.data]);
 
-  const roots = byParent.get(null) ?? [];
+  const roots = byParent.get(target.thread ?? null) ?? [];
 
   return (
     <section className="flex flex-col gap-3">
       <Separator />
       <h2 className="text-sm font-medium">
-        Comments{commentsQ.data && commentsQ.data.length > 0 ? ` (${commentsQ.data.length})` : ""}
+        {target.thread ? "Replies" : "Comments"}
+        {commentsQ.data && commentsQ.data.length > 0 ? ` (${commentsQ.data.length})` : ""}
       </h2>
       {commentsQ.isPending && <p className="text-sm text-muted-foreground">Loading…</p>}
       {roots.length === 0 && commentsQ.isSuccess && (
         <Empty className="p-4">
           <EmptyHeader>
-            <EmptyDescription>No comments yet.</EmptyDescription>
+            <EmptyDescription>{target.thread ? "No replies yet." : "No comments yet."}</EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
       {roots.map((c) => (
         <CommentNode key={c.id} comment={c} byParent={byParent} activityId={activityId} />
       ))}
-      <Composer activityId={activityId} target={target} />
+      {/* replies to a thread hang off the thread comment itself */}
+      <Composer activityId={activityId} target={target.thread ? {} : target} parentId={target.thread} />
     </section>
   );
 }

@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen, Plus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
-import type { Poll, Slot } from "@/api/types";
+import type { Poll, PollKind, PollOption, Slot } from "@/api/types";
+import UserAvatar from "@/components/UserAvatar";
 import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
 import CommentSection from "@/components/comments/CommentSection";
@@ -118,19 +119,24 @@ export default function PollPage() {
             </h1>
           </div>
 
-          {kind === "choice" && <ChoicePoll poll={pollQ.data} activityId={id} />}
+          {kind === "choice" && (
+            <>
+              <ChoicePoll poll={pollQ.data} activityId={id} />
+              <ChoiceBreakdown options={pollQ.data.options ?? []} />
+            </>
+          )}
 
           {kind === "date" && (
             <>
               <DatePoll poll={pollQ.data} activityId={id} slots={slots} />
-              <MemberBreakdown slots={slots} />
+              <MemberBreakdown slots={slots} kind={kind} />
             </>
           )}
 
           {kind === "range" && (
             <>
               <RangePoll poll={pollQ.data} activityId={id} slots={slots} />
-              <MemberBreakdown slots={slots} />
+              <MemberBreakdown slots={slots} kind={kind} />
             </>
           )}
 
@@ -164,7 +170,7 @@ export default function PollPage() {
               </section>
 
               {/* Per-member breakdown */}
-              <MemberBreakdown slots={slots} />
+              <MemberBreakdown slots={slots} kind={kind} />
             </>
           )}
 
@@ -206,12 +212,14 @@ function sortSlots(slots: Slot[]): Slot[] {
   );
 }
 
-function SlotRow({ slot }: { slot: Slot }) {
+function SlotRow({ slot, showStatus = true }: { slot: Slot; showStatus?: boolean }) {
   return (
     <span className="flex items-baseline gap-2 text-sm">
-      <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[slot.status]}`}>
-        {STATUS_ICON[slot.status]}
-      </span>
+      {showStatus && (
+        <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[slot.status]}`}>
+          {STATUS_ICON[slot.status]}
+        </span>
+      )}
       <span>
         {slot.date ? formatDay(slot.date) : <span className="italic">general {slot.status}</span>}
         {slot.date_end && slot.date_end !== slot.date && <> – {formatDay(slot.date_end)}</>}
@@ -226,8 +234,39 @@ function SlotRow({ slot }: { slot: Slot }) {
   );
 }
 
-function MemberBreakdown({ slots }: { slots: Slot[] }) {
+/** Per-option voter list — the mobile-friendly way to see who voted what (avatars have no hover). */
+function ChoiceBreakdown({ options }: { options: PollOption[] }) {
+  const voted = options.filter((o) => !o.deleted_at && o.voters.length > 0);
+  if (voted.length === 0) return null;
+
+  return (
+    <Collapsible render={<section className="flex flex-col gap-4" />}>
+      <Separator />
+      <CollapsibleTrigger className="group flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ChevronRight className="size-4 transition-transform group-data-panel-open:rotate-90" />
+        See individual responses
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-col gap-4">
+        {voted.map((o) => (
+          <div key={o.id} className="flex flex-col gap-1.5">
+            <p className="text-sm font-medium">{o.label}</p>
+            {o.voters.map((v) => (
+              <span key={v.id} className="flex items-center gap-2 text-sm">
+                <UserAvatar name={v.display_name} className="size-5" textClassName="text-[10px]" />
+                {v.display_name}
+              </span>
+            ))}
+          </div>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function MemberBreakdown({ slots, kind }: { slots: Slot[]; kind: PollKind }) {
   const [mode, setMode] = useState<"selection" | "person">("selection");
+  // date/range polls only take "yes" votes, so a ✓ says nothing — the avatar identifies the voter
+  const showStatus = kind === "datetime";
 
   const byMember = useMemo(() => {
     const map = new Map<string, { name: string; slots: Slot[] }>();
@@ -279,9 +318,12 @@ function MemberBreakdown({ slots }: { slots: Slot[] }) {
         {mode === "person" &&
           byMember.map((m) => (
             <div key={m.name} className="flex flex-col gap-1">
-              <p className="text-sm font-medium">{m.name}</p>
+              <p className="text-sm font-medium flex items-center gap-2">
+                <UserAvatar name={m.name} className="size-5" textClassName="text-[10px]" />
+                {m.name}
+              </p>
               {m.slots.map((s) => (
-                <SlotRow key={s.id} slot={s} />
+                <SlotRow key={s.id} slot={s} showStatus={showStatus} />
               ))}
             </div>
           ))}
@@ -291,10 +333,13 @@ function MemberBreakdown({ slots }: { slots: Slot[] }) {
             <div key={g.label} className="flex flex-col gap-1">
               <p className="text-sm font-medium">{g.label}</p>
               {g.slots.map((s) => (
-                <span key={s.id} className="flex items-baseline gap-2 text-sm">
-                  <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[s.status]}`}>
-                    {STATUS_ICON[s.status]}
-                  </span>
+                <span key={s.id} className="flex items-center gap-2 text-sm">
+                  <UserAvatar name={s.member.display_name} className="size-5" textClassName="text-[10px]" />
+                  {showStatus && (
+                    <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[s.status]}`}>
+                      {STATUS_ICON[s.status]}
+                    </span>
+                  )}
                   <span>
                     {s.member.display_name}
                     {s.time_start && s.time_end && (
