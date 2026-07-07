@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { Event } from "@/api/types"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -30,6 +31,34 @@ export function isEventPast(eventDate: string): boolean {
   const dayAfter = parseLocalDate(eventDate)
   dayAfter.setDate(dayAfter.getDate() + 1)
   return dayAfter < new Date()
+}
+
+// Standard .ics file, generated client-side — no account or server needed.
+export function downloadIcs(event: Event, title: string) {
+  const d = event.date.replaceAll("-", "")
+  const t = (time: string) => time.slice(0, 5).replace(":", "") + "00"
+  const dtstart = event.time_start ? `DTSTART:${d}T${t(event.time_start)}` : `DTSTART;VALUE=DATE:${d}`
+  const dtend = event.time_start && event.time_end ? `DTEND:${d}T${t(event.time_end)}` : ""
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//small.management//EN",
+    "BEGIN:VEVENT",
+    `UID:event-${event.id}@small.management`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
+    dtstart,
+    ...(dtend ? [dtend] : []),
+    `SUMMARY:${title}`,
+    ...(event.note ? [`DESCRIPTION:${event.note.replace(/\n/g, "\\n")}`] : []),
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ]
+  const blob = new Blob([lines.join("\r\n")], { type: "text/calendar" })
+  const a = document.createElement("a")
+  a.href = URL.createObjectURL(blob)
+  a.download = `${title.toLowerCase().replace(/\s+/g, "-")}.ics`
+  a.click()
+  URL.revokeObjectURL(a.href)
 }
 
 export function timeAgo(iso: string): string {

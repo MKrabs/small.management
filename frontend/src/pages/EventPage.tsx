@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Pie, PieChart } from "recharts";
 import { Archive, ArchiveRestore, CalendarPlus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
@@ -9,11 +9,18 @@ import type { Event, Member, RSVP } from "@/api/types";
 import DetailShell from "@/components/layout/DetailShell";
 import CommentSection from "@/components/comments/CommentSection";
 import ConfirmDelete from "@/components/ConfirmDelete";
+import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Marker, MarkerContent } from "@/components/ui/marker";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
-import { cn, formatDay, formatTime, isEventPast, timeAgo } from "@/lib/utils";
+import { STATUS_TEXT, STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
+import { cn, downloadIcs, formatDay, formatTime, isEventPast, timeAgo } from "@/lib/utils";
 
 type RsvpStatus = RSVP["status"];
 
@@ -34,12 +41,18 @@ const RSVP_TOGGLE: Record<RsvpStatus, string> = {
   not_going: STATUS_TOGGLE.no,
 };
 
+const chartConfig = {
+  count: { label: "RSVPs" },
+  going: { label: "Going", color: "var(--color-green-600)" },
+  maybe: { label: "Maybe", color: "var(--color-yellow-500)" },
+  not_going: { label: "Not going", color: "var(--color-red-500)" },
+} satisfies ChartConfig;
+
 export default function EventPage() {
   const { eventId = "" } = useParams();
   const { id, activity } = useActivity();
   const api = useApi();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<RsvpStatus | null>(null);
 
   const eventQ = useQuery({
     queryKey: ["event", id, eventId],
@@ -67,6 +80,12 @@ export default function EventPage() {
       api.put(`/activities/${id}/events/${eventId}/rsvps/`, { status, comment: myRsvp?.comment ?? "" }, id),
     onSuccess: invalidate,
     onError: () => toast.error("Couldn't save your RSVP — try again."),
+  });
+
+  const retractMut = useMutation({
+    mutationFn: () => api.del(`/activities/${id}/events/${eventId}/rsvps/`, id),
+    onSuccess: invalidate,
+    onError: () => toast.error("Couldn't remove your RSVP — try again."),
   });
 
   const archiveMut = useMutation({
@@ -138,13 +157,36 @@ export default function EventPage() {
             )}
           </div>
 
-          {/* Your RSVP — tap a column to vote */}
+          {/* RSVP tally as a big half-donut */}
+          {rsvps.length > 0 && (
+            <ChartContainer config={chartConfig} className="mx-auto -mb-6 aspect-[2/1] w-full max-w-xs">
+              <PieChart>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Pie
+                  data={(["going", "maybe", "not_going"] as const).map((s) => ({
+                    status: s,
+                    count: tally(s),
+                    fill: `var(--color-${s})`,
+                  }))}
+                  dataKey="count"
+                  nameKey="status"
+                  startAngle={180}
+                  endAngle={0}
+                  innerRadius={70}
+                  outerRadius={110}
+                  cy="85%"
+                />
+              </PieChart>
+            </ChartContainer>
+          )}
+
+          {/* Your RSVP — tap a column to vote, tap again to retract */}
           <ToggleGroup
             value={myRsvp ? [myRsvp.status] : []}
-            onValueChange={(v) => v[0] && rsvpMut.mutate(v[0] as RsvpStatus)}
+            onValueChange={(v) => (v[0] ? rsvpMut.mutate(v[0] as RsvpStatus) : retractMut.mutate())}
             variant="outline"
             className="w-full"
-            disabled={archived || rsvpMut.isPending}
+            disabled={archived || rsvpMut.isPending || retractMut.isPending}
           >
             {(["going", "maybe", "not_going"] as const).map((s) => (
               <ToggleGroupItem
@@ -158,82 +200,58 @@ export default function EventPage() {
             ))}
           </ToggleGroup>
 
-          {/* Member RSVPs — small toggle filters the list */}
-          <section className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-medium">RSVPs</h2>
-              <ToggleGroup
-                value={filter ? [filter] : []}
-                onValueChange={(v) => setFilter((v[0] as RsvpStatus) ?? null)}
-                variant="outline"
-                size="sm"
-              >
-                {(["going", "maybe", "not_going"] as const).map((s) => (
-                  <ToggleGroupItem key={s} value={s} className={cn("text-xs font-normal", RSVP_TOGGLE[s])}>
-                    {RSVP_LABEL[s]}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-            {(membersQ.data ?? [])
-              .map((m) => ({ member: m, rsvp: rsvps.find((r) => r.member.id === m.id) }))
-              .filter(({ rsvp }) => (filter ? rsvp?.status === filter : true))
-              .map(({ member, rsvp }) => (
-                <div key={member.id} className={`flex items-center gap-3 ${rsvp ? "" : "opacity-40"}`}>
-                  <span className="text-sm font-medium flex-1 truncate">{member.display_name}</span>
-                  {rsvp?.comment && (
-                    <span className="text-xs text-muted-foreground truncate max-w-[40%]">“{rsvp.comment}”</span>
-                  )}
-                  <Badge
-                    variant={rsvp ? RSVP_STATUS[rsvp.status] : "outline"}
-                    className={cn("shrink-0", !rsvp && "text-muted-foreground")}
-                  >
-                    {rsvp ? RSVP_LABEL[rsvp.status] : "no answer"}
-                  </Badge>
+          {/* Member RSVPs, grouped by answer */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-sm font-medium">RSVPs</h2>
+            {(["going", "maybe", "not_going"] as const).map((s) => {
+              const group = rsvps.filter((r) => r.status === s);
+              if (group.length === 0) return null;
+              return (
+                <div key={s} className="flex flex-col gap-1.5">
+                  <p className={cn("text-sm font-medium", STATUS_TEXT[RSVP_STATUS[s]])}>
+                    {RSVP_LABEL[s]} ({group.length})
+                  </p>
+                  {group.map((r) => (
+                    <span key={r.id} className="flex items-center gap-2 text-sm">
+                      <UserAvatar name={r.member.display_name} className="size-5" textClassName="text-[10px]" />
+                      <span className="truncate">{r.member.display_name}</span>
+                      {r.comment && (
+                        <span className="text-xs text-muted-foreground truncate">“{r.comment}”</span>
+                      )}
+                    </span>
+                  ))}
                 </div>
-              ))}
+              );
+            })}
+            {(() => {
+              const noAnswer = (membersQ.data ?? []).filter((m) => !rsvps.some((r) => r.member.id === m.id));
+              if (noAnswer.length === 0) return null;
+              return (
+                <div className="flex flex-col gap-1.5 opacity-40">
+                  <p className="text-sm font-medium">no answer ({noAnswer.length})</p>
+                  {noAnswer.map((m) => (
+                    <span key={m.id} className="flex items-center gap-2 text-sm">
+                      <UserAvatar name={m.display_name} className="size-5" textClassName="text-[10px]" />
+                      <span className="truncate">{m.display_name}</span>
+                    </span>
+                  ))}
+                </div>
+              );
+            })()}
           </section>
 
-          <Button
-            variant="outline"
-            className="self-start"
-            onClick={() => downloadIcs(event, activity?.title ?? "Event")}
-          >
-            <CalendarPlus data-icon="inline-start" />
-            Add to calendar
-          </Button>
+          <Marker variant="separator">
+            <MarkerContent>
+              <Button variant="outline" onClick={() => downloadIcs(event, activity?.title ?? "Event")}>
+                <CalendarPlus data-icon="inline-start" />
+                Add to calendar
+              </Button>
+            </MarkerContent>
+          </Marker>
 
           <CommentSection activityId={id} target={{ event: Number(eventId) }} />
         </div>
       )}
     </DetailShell>
   );
-}
-
-// Standard .ics file, generated client-side — no account or server needed.
-function downloadIcs(event: Event, title: string) {
-  const d = event.date.replaceAll("-", "");
-  const t = (time: string) => time.slice(0, 5).replace(":", "") + "00";
-  const dtstart = event.time_start ? `DTSTART:${d}T${t(event.time_start)}` : `DTSTART;VALUE=DATE:${d}`;
-  const dtend = event.time_start && event.time_end ? `DTEND:${d}T${t(event.time_end)}` : "";
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//small.management//EN",
-    "BEGIN:VEVENT",
-    `UID:event-${event.id}@small.management`,
-    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
-    dtstart,
-    ...(dtend ? [dtend] : []),
-    `SUMMARY:${title}`,
-    ...(event.note ? [`DESCRIPTION:${event.note.replace(/\n/g, "\\n")}`] : []),
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ];
-  const blob = new Blob([lines.join("\r\n")], { type: "text/calendar" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${title.toLowerCase().replace(/\s+/g, "-")}.ics`;
-  a.click();
-  URL.revokeObjectURL(a.href);
 }

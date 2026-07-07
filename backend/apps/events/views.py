@@ -62,3 +62,11 @@ class RSVPView(ActivityMixin, APIView):
         )
         Log.record(activity, member, "rsvp", event_id=event_id, status=status_val)
         return Response(RSVPSerializer(rsvp).data, status=201 if created else 200)
+
+    def delete(self, request, activity_id, event_id):
+        activity = self.get_activity()
+        member = self.get_member()
+        event = get_object_or_404(Event, id=event_id, activity=activity)
+        RSVP.objects.filter(event=event, member=member).delete()
+        Log.record(activity, member, "retracted_rsvp", event_id=event_id)
+        return Response(status=204)

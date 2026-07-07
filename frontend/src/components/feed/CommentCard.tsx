@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Comment } from "@/api/types";
 import CommentSection from "@/components/comments/CommentSection";
-import { cn, isWarning, timeAgo } from "@/lib/utils";
+import FeedCard from "./FeedCard";
+import { isWarning } from "@/lib/utils";
 
 type Props = { comment: Comment; activityId: string };
 
@@ -12,25 +13,19 @@ export default function CommentCard({ comment, activityId }: Props) {
   const warning = !archived && isWarning(comment.body);
 
   return (
-    <div
-      className={cn(
-        "bg-card shadow-md rounded-lg p-4 flex flex-col gap-1",
-        archived && "opacity-40",
-        warning && "bg-yellow-500/10",
-      )}
+    <FeedCard
+      type="Thread"
+      suffix={archived ? "archived" : undefined}
+      by={{ name: comment.member?.display_name ?? (warning ? "System" : undefined), at: comment.created_at }}
+      onOpen={() => setOpen((v) => !v)}
+      archived={archived}
+      className={warning ? "bg-yellow-500/10" : undefined}
+      title={<p className="text-sm mt-1">{archived ? "Archived." : comment.body}</p>}
     >
-      <span className="text-xs text-muted-foreground uppercase tracking-wide">Thread</span>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-sm font-medium truncate">
-          {comment.member?.display_name ?? (warning ? "System" : "someone")}
-        </span>
-        <span className="text-xs text-muted-foreground shrink-0">{timeAgo(comment.created_at)}</span>
-      </div>
-      <p className="text-sm">{archived ? "Archived." : comment.body}</p>
       {(!archived || comment.reply_count > 0) && (
         <button
           onClick={() => setOpen((v) => !v)}
-          className="self-start text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="self-start -mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           {open
             ? "Hide replies"
@@ -40,6 +35,6 @@ export default function CommentCard({ comment, activityId }: Props) {
         </button>
       )}
       {open && <CommentSection activityId={activityId} target={{ thread: comment.id }} />}
-    </div>
+    </FeedCard>
   );
 }

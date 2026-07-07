@@ -2,7 +2,7 @@ import type { Comment } from "@/api/types";
 import { Separator } from "@/components/ui/separator";
 import { cn, isWarning, timeAgo } from "@/lib/utils";
 
-/** Read-only latest top-level comments on a feed card; the dedicated page has the full tree. */
+/** Read-only newest comments on a feed card — replies indented; the dedicated page has the full tree. */
 export default function CommentPreview({ comments, total }: { comments: Comment[]; total: number }) {
   if (total === 0) return null;
   return (
@@ -13,8 +13,13 @@ export default function CommentPreview({ comments, total }: { comments: Comment[
         return (
           <p
             key={c.id}
-            className={cn("flex items-baseline gap-2 text-xs", warning && "rounded bg-yellow-500/10 px-1.5 py-0.5")}
+            className={cn(
+              "flex items-baseline gap-2 text-xs",
+              c.parent_id && "pl-4",
+              warning && "rounded bg-yellow-500/10 px-1.5 py-0.5",
+            )}
           >
+            {c.parent_id && <span className="text-muted-foreground/60 shrink-0">↳</span>}
             <span className="truncate flex-1">
               <span className="font-medium">{c.member?.display_name ?? (warning ? "System" : "someone")}</span>{" "}
               <span className="text-muted-foreground">{c.body}</span>

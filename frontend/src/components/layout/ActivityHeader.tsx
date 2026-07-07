@@ -154,8 +154,23 @@ function MembersSheet({
         </p>
       )}
       <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
-        {(claiming ? zombies : members).map((m) =>
-          claiming ? (
+        {(claiming ? zombies : members).map((m) => {
+          // identical row markup in both modes so the lists line up
+          const row = (
+            <>
+              <UserAvatar name={m.display_name} className="size-6 text-[10px]" />
+              <span className="text-sm font-medium flex-1 truncate">
+                {m.display_name}
+                {m.id === activity.me?.id && (
+                  <span className="text-xs font-normal text-muted-foreground"> (you)</span>
+                )}
+              </span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {m.is_anonymous ? "guest · " : ""}joined {timeAgo(m.joined_at)}
+              </span>
+            </>
+          );
+          return claiming ? (
             <ConfirmDelete
               key={m.id}
               title={`Claim ${m.display_name}?`}
@@ -163,23 +178,17 @@ function MembersSheet({
               description={`All of ${m.display_name}'s votes, RSVPs, and comments become yours, then the member is removed. Where you both voted on the same thing, your own vote is kept. This can't be undone.`}
               onConfirm={() => claimMut.mutate(m.id)}
               trigger={
-                <button className="flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 text-left hover:bg-muted transition-colors">
-                  <UserAvatar name={m.display_name} className="size-6 text-[10px]" />
-                  <span className="text-sm font-medium flex-1 truncate">{m.display_name}</span>
-                  <span className="text-xs text-muted-foreground">joined {timeAgo(m.joined_at)}</span>
+                <button className="flex w-full items-center gap-2 rounded-md py-1 text-left hover:bg-muted transition-colors">
+                  {row}
                 </button>
               }
             />
           ) : (
-            <div key={m.id} className="flex items-center gap-2">
-              <UserAvatar name={m.display_name} className="size-6 text-[10px]" />
-              <span className="text-sm font-medium flex-1 truncate">{m.display_name}</span>
-              <span className="text-xs text-muted-foreground">
-                {m.is_anonymous ? "guest · " : ""}joined {timeAgo(m.joined_at)}
-              </span>
+            <div key={m.id} className="flex items-center gap-2 py-1">
+              {row}
             </div>
-          ),
-        )}
+          );
+        })}
       </div>
       {claimMut.isError && <p className="text-sm text-destructive">Couldn't claim that member — try again.</p>}
     </BottomSheet>
