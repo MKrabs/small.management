@@ -31,6 +31,7 @@ export type Cycle = {
   name: string;
   created_by: Member | null;
   created_at: string;
+  archived_at: string | null;
 };
 
 export type Log = {

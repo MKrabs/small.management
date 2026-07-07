@@ -60,65 +60,72 @@ export default function EventCard({ event, activityId }: Props) {
       archived={archived}
       className={!archived && past ? "opacity-60" : undefined}
     >
-      <div className="flex gap-4">
-        {/* when + what */}
-        <div className="flex-1 min-w-0 flex flex-col items-start gap-1">
+      {/* two columns (date+note | RSVP+calendar) that stack when the card gets narrow */}
+      <div className="@container">
+      <div className="flex flex-col @md:flex-row gap-4">
+        {/* when on top, note pushed to the bottom on wide cards */}
+        <div className="flex-1 min-w-0 flex flex-col gap-3 @md:justify-between">
           <Link to={`event/${event.id}`} className="block hover:opacity-80 transition-opacity">
-            <h3 className={cn("text-lg font-bold leading-tight", archived && "line-through")}>
-              {formatDay(event.date, { weekday: "long", day: "numeric", month: "long" })}
+            <h3 className={cn("font-serif text-4xl leading-tight", archived && "line-through")}>
+              {formatDay(event.date, { weekday: "long" })}
             </h3>
+            <p className="text-3xl leading-tight">
+              {formatDay(event.date, { day: "numeric", month: "long" })}
+            </p>
             {event.time_start && (
-              <p className="text-lg font-bold leading-tight">
+              <p className="text-lg leading-tight">
                 {formatTime(event.time_start)}
                 {event.time_end && ` – ${formatTime(event.time_end)}`}
               </p>
             )}
-            {event.note && <p className="text-sm text-muted-foreground mt-1">{event.note}</p>}
           </Link>
+          {event.note && <p className="text-sm text-muted-foreground">{event.note}</p>}
+        </div>
+
+        {/* RSVP bars on top, calendar button pushed to the bottom on wide cards */}
+        <div className="@md:w-36 shrink-0 flex flex-col gap-4 @md:justify-between">
+          <div className="flex flex-col gap-2.5">
+            {ROWS.map(({ status, icon, label, bar, selected }) => {
+              const voters = byStatus(status);
+              const mine = myRsvp?.status === status;
+              return (
+                <div key={status} className="flex items-center gap-2">
+                  <div className="flex-1 flex flex-col gap-1">
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full ml-auto transition-[width] duration-300", bar)}
+                        style={{ width: `${(voters.length / max) * 100}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <AvatarRow voters={voters.map((r) => ({ id: r.member.id, display_name: r.member.display_name }))} />
+                    </div>
+                  </div>
+                  <button
+                    disabled={archived || busy}
+                    onClick={() => (mine ? retractMut.mutate() : rsvpMut.mutate(status))}
+                    aria-label={mine ? `Retract RSVP ${label}` : `RSVP ${label}`}
+                    className={cn(
+                      "size-7 shrink-0 rounded-full border text-xs font-semibold transition-colors",
+                      mine ? selected : "text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {icon}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
           <Button
             variant="outline"
             size="sm"
-            className="mt-1"
             onClick={() => downloadIcs(event, activity?.title ?? "Event")}
           >
             <CalendarPlus data-icon="inline-start" />
             Add to calendar
           </Button>
         </div>
-
-        {/* RSVP bars — tap a status button to vote, tap again to retract */}
-        <div className="w-36 shrink-0 flex flex-col justify-center gap-2.5">
-          {ROWS.map(({ status, icon, label, bar, selected }) => {
-            const voters = byStatus(status);
-            const mine = myRsvp?.status === status;
-            return (
-              <div key={status} className="flex items-center gap-2">
-                <div className="flex-1 flex flex-col gap-1">
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={cn("h-full rounded-full ml-auto", bar)}
-                      style={{ width: `${(voters.length / max) * 100}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <AvatarRow voters={voters.map((r) => ({ id: r.member.id, display_name: r.member.display_name }))} />
-                  </div>
-                </div>
-                <button
-                  disabled={archived || busy}
-                  onClick={() => (mine ? retractMut.mutate() : rsvpMut.mutate(status))}
-                  aria-label={mine ? `Retract RSVP ${label}` : `RSVP ${label}`}
-                  className={cn(
-                    "size-7 shrink-0 rounded-full border text-xs font-semibold transition-colors",
-                    mine ? selected : "text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {icon}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+      </div>
       </div>
 
       {past && <p className="text-xs text-muted-foreground">This event has passed.</p>}

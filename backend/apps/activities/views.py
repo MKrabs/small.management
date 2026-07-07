@@ -219,7 +219,7 @@ class CycleCreateView(ActivityMixin, APIView):
         count = activity.cycles.count()
         name = (request.data.get("name") or f"{activity.title} #{count + 1}").strip()
         cycle = Cycle.objects.create(activity=activity, name=name, created_by=member)
-        Log.record(activity, member, "started_cycle", name=name)
+        Log.record(activity, member, "started_cycle", name=name, cycle_id=cycle.id)
         return Response(CycleSerializer(cycle).data, status=201)
 
 
@@ -233,7 +233,22 @@ class CycleDetailView(ActivityMixin, APIView):
             cycle.name = name
             cycle.save()
             Log.record(activity, member, "renamed_cycle", name=name, cycle_id=cycle.id)
+        if "archived" in request.data:
+            archived = bool(request.data["archived"])
+            cycle.archived_at = timezone.now() if archived else None
+            cycle.save()
+            Log.record(activity, member, "archived" if archived else "unarchived", target="cycle")
         return Response(CycleSerializer(cycle).data)
+
+    def delete(self, request, activity_id, pk):
+        activity = self.get_activity()
+        member = self.get_member()
+        cycle = get_object_or_404(Cycle, id=pk, activity=activity)
+        # Poll/Event/Comment cycle FKs are SET_NULL; the feed re-segments, so
+        # the round's content just merges into the previous fold.
+        Log.record(activity, member, "deleted_cycle", name=cycle.name)
+        cycle.delete()
+        return Response(status=204)
 
 
 class CommentListCreateView(ActivityMixin, APIView):

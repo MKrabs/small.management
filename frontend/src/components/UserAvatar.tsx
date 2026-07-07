@@ -23,7 +23,8 @@ export default function UserAvatar({
 
   return (
     <Tooltip>
-      <TooltipTrigger render={<Avatar className={className} />}>
+      {/* every avatar animates in on appearance; AvatarRow handles the way out */}
+      <TooltipTrigger render={<Avatar className={cn("animate-in fade-in zoom-in-75", className)} />}>
         <AvatarFallback
           className={cn("font-medium select-none", textClassName)}
           // ponytail: fixed light palette — app is light-only for now

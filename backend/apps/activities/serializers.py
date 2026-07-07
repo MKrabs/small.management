@@ -58,7 +58,7 @@ class CycleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cycle
-        fields = ["id", "name", "created_by", "created_at"]
+        fields = ["id", "name", "created_by", "created_at", "archived_at"]
 
 
 class LogSerializer(serializers.ModelSerializer):
