@@ -1,16 +1,19 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Pie, PieChart } from "recharts";
-import { Archive, ArchiveRestore, CalendarPlus } from "lucide-react";
+import { Archive, ArchiveRestore, CalendarPlus, Pencil } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
 import type { Event, Member, RSVP } from "@/api/types";
+import BottomSheet from "@/components/layout/BottomSheet";
 import DetailShell from "@/components/layout/DetailShell";
 import CommentSection from "@/components/comments/CommentSection";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ChartContainer,
   ChartTooltip,
@@ -53,6 +56,7 @@ export default function EventPage() {
   const { id, activity } = useActivity();
   const api = useApi();
   const qc = useQueryClient();
+  const [noteOpen, setNoteOpen] = useState(false);
 
   const eventQ = useQuery({
     queryKey: ["event", id, eventId],
@@ -108,34 +112,47 @@ export default function EventPage() {
               <span className="my-auto text-xs text-muted-foreground uppercase tracking-wide">
                 Event{archived && " · archived"}
               </span>
-              {archived ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={() => archiveMut.mutate(false)}
-                >
-                  <ArchiveRestore data-icon="inline-start" />
-                  Unarchive
-                </Button>
-              ) : (
-                <ConfirmDelete
-                  title="Archive this event?"
-                  actionLabel="Archive"
-                  description="It's archived for everyone but stays visible, struck through. You can unarchive it anytime."
-                  onConfirm={() => archiveMut.mutate(true)}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="text-muted-foreground"
-                      aria-label="Archive event"
-                    >
-                      <Archive />
-                    </Button>
-                  }
-                />
-              )}
+              <div className="flex items-center gap-1">
+                {!archived && (
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="text-muted-foreground"
+                    aria-label="Edit note"
+                    onClick={() => setNoteOpen(true)}
+                  >
+                    <Pencil />
+                  </Button>
+                )}
+                {archived ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => archiveMut.mutate(false)}
+                  >
+                    <ArchiveRestore data-icon="inline-start" />
+                    Unarchive
+                  </Button>
+                ) : (
+                  <ConfirmDelete
+                    title="Archive this event?"
+                    actionLabel="Archive"
+                    description="It's archived for everyone but stays visible, struck through. You can unarchive it anytime."
+                    onConfirm={() => archiveMut.mutate(true)}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground"
+                        aria-label="Archive event"
+                      >
+                        <Archive />
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
             </div>
             <h1 className={`text-3xl font-semibold ${archived ? "line-through opacity-40" : ""}`}>
               {formatDay(event.date, { weekday: "long", month: "long", day: "numeric" })}
@@ -252,6 +269,57 @@ export default function EventPage() {
           <CommentSection activityId={id} target={{ event: Number(eventId) }} />
         </div>
       )}
+      {noteOpen && event && (
+        <NoteSheet event={event} activityId={id} eventId={eventId} onClose={() => setNoteOpen(false)} />
+      )}
     </DetailShell>
+  );
+}
+
+function NoteSheet({
+  event,
+  activityId,
+  eventId,
+  onClose,
+}: {
+  event: Event;
+  activityId: string;
+  eventId: string;
+  onClose: () => void;
+}) {
+  const api = useApi();
+  const qc = useQueryClient();
+  const [note, setNote] = useState(event.note ?? "");
+
+  const noteMut = useMutation({
+    mutationFn: () => api.patch(`/activities/${activityId}/events/${eventId}/`, { note: note.trim() }, activityId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["event", activityId, eventId] });
+      qc.invalidateQueries({ queryKey: ["feed", activityId] });
+      onClose();
+    },
+  });
+
+  const removing = !note.trim() && !!event.note;
+  return (
+    <BottomSheet onClose={onClose} title="Event note">
+      <h2 className="font-semibold text-lg">Event note</h2>
+      <Textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="A note for the group — leave empty to remove it"
+        autoFocus
+      />
+      {noteMut.isError && <p className="text-sm text-destructive">Something went wrong.</p>}
+      <div className="flex gap-2 justify-end">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={() => noteMut.mutate()}
+          disabled={noteMut.isPending || (!note.trim() && !event.note)}
+        >
+          {noteMut.isPending ? "Saving…" : removing ? "Remove note" : "Save note"}
+        </Button>
+      </div>
+    </BottomSheet>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { GripVertical, Plus, X } from "lucide-react";
@@ -121,7 +121,10 @@ export default function ChoicePoll({ poll, activityId }: Props) {
             )}
           >
             <span
-              className={cn("absolute inset-y-0 left-0", opt.my_vote ? "bg-primary/15" : "bg-muted")}
+              className={cn(
+                "absolute inset-y-0 left-0 transition-[width] duration-300",
+                opt.my_vote ? "bg-primary/15" : "bg-muted",
+              )}
               style={{ width: `${(opt.voters.length / maxVotes) * 100}%` }}
             />
             <span className="relative flex items-center justify-between gap-2">
@@ -270,15 +273,42 @@ function AddOption({
   );
 }
 
-/** Overlapping initials avatars with names on hover. */
-export function AvatarRow({ voters, max = 4 }: { voters: { id: string; display_name: string }[]; max?: number }) {
-  if (voters.length === 0) return null;
-  const shown = voters.slice(0, max);
-  const extra = voters.length - shown.length;
+type Voter = { id: string; display_name: string };
+
+/** Keeps just-removed voters mounted briefly, flagged `leaving`, so they can animate out.
+ * ponytail: leavers re-append at the end and each removal runs its own sweep timer —
+ * per-item positions/timestamps only if rows ever churn faster than 200ms. */
+function useWithLeaving(voters: Voter[], ms = 200): (Voter & { leaving?: boolean })[] {
+  const prev = useRef(voters);
+  const [leaving, setLeaving] = useState<Voter[]>([]);
+  useEffect(() => {
+    const gone = prev.current.filter((p) => !voters.some((v) => v.id === p.id));
+    prev.current = voters;
+    if (gone.length === 0) return;
+    setLeaving((cur) => [...cur.filter((c) => !gone.some((g) => g.id === c.id)), ...gone]);
+    setTimeout(() => setLeaving((cur) => cur.filter((c) => !gone.some((g) => g.id === c.id))), ms);
+  }, [voters, ms]);
+  return [
+    ...voters,
+    ...leaving.filter((l) => !voters.some((v) => v.id === l.id)).map((l) => ({ ...l, leaving: true })),
+  ];
+}
+
+/** Overlapping initials avatars with names on hover; leavers fade out automatically. */
+export function AvatarRow({ voters, max = 4 }: { voters: Voter[]; max?: number }) {
+  const withLeaving = useWithLeaving(voters);
+  if (withLeaving.length === 0) return null;
+  const shown = withLeaving.slice(0, max);
+  const extra = withLeaving.length - shown.length;
   return (
     <AvatarGroup>
       {shown.map((v) => (
-        <UserAvatar key={v.id} name={v.display_name} className="size-5" textClassName="text-[10px]" />
+        <UserAvatar
+          key={v.id}
+          name={v.display_name}
+          className={cn("size-5", v.leaving && "opacity-0 scale-75 transition-all duration-200")}
+          textClassName="text-[10px]"
+        />
       ))}
       {extra > 0 && <AvatarGroupCount className="size-5 text-[10px]">+{extra}</AvatarGroupCount>}
     </AvatarGroup>

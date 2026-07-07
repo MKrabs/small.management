@@ -11,24 +11,32 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-/** Destructive-action confirmation — replaces window.confirm(). */
+/** Destructive-action confirmation — replaces window.confirm().
+ * Pass `trigger` to open it in place, or control it via `open`/`onOpenChange`
+ * (e.g. from a dropdown item, which unmounts before a nested trigger could fire). */
 export default function ConfirmDelete({
   title,
   description,
   trigger,
   onConfirm,
   actionLabel = "Delete",
+  open: controlledOpen,
+  onOpenChange,
 }: {
   title: string;
   description: string;
-  trigger: React.ReactElement<Record<string, unknown>>;
+  trigger?: React.ReactElement<Record<string, unknown>>;
   onConfirm: () => void;
   actionLabel?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger render={trigger} />
+      {trigger && <AlertDialogTrigger render={trigger} />}
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

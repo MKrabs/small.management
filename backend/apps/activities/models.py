@@ -61,6 +61,7 @@ class Cycle(models.Model):
     name = models.CharField(max_length=200)
     created_by = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["created_at"]

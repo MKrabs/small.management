@@ -44,6 +44,10 @@ class EventDetailView(ActivityMixin, APIView):
             event.deleted_at = timezone.now() if archived else None
             event.save()
             Log.record(activity, member, "archived" if archived else "unarchived", target="event", target_id=pk)
+        if "note" in request.data:
+            event.note = (request.data.get("note") or "").strip()
+            event.save()
+            Log.record(activity, member, "edited_note", target="event", target_id=pk)
         return Response(EventSerializer(event).data)
 
 

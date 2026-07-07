@@ -26,6 +26,7 @@ export default function ActivityPage() {
   const navigate = useNavigate();
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [showLog, setShowLog] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   const activityQ = useQuery({
     queryKey: ["activity", id],
@@ -58,10 +59,19 @@ export default function ActivityPage() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <ActivityHeader activity={activity} activityId={id} showLog={showLog} onToggleLog={() => setShowLog((v) => !v)} />
+      <ActivityHeader
+        activity={activity}
+        activityId={id}
+        showLog={showLog}
+        onToggleLog={() => setShowLog((v) => !v)}
+        showArchived={showArchived}
+        onToggleArchived={() => setShowArchived((v) => !v)}
+      />
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
         {feedQ.isPending && <p className="text-muted-foreground text-sm">Loading feed…</p>}
-        {feedQ.data && <ActivityFeed items={feedQ.data} activityId={id} memberCount={activity.member_count} />}
+        {feedQ.data && (
+          <ActivityFeed items={feedQ.data} activityId={id} memberCount={activity.member_count} showArchived={showArchived} />
+        )}
       </main>
 
       {/* FAB */}

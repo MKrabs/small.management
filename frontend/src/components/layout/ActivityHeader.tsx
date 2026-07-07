@@ -1,28 +1,56 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, Check, Copy, Users } from "lucide-react";
+import { Archive, ArchiveRestore, Check, Copy, Eye, MoreHorizontal, Pencil, ScrollText, Users } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { Activity, Member } from "@/api/types";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import BottomSheet from "@/components/layout/BottomSheet";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import UserAvatar from "@/components/UserAvatar";
-import { timeAgo } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 
 type Props = {
   activity: Activity;
   activityId: string;
   showLog: boolean;
   onToggleLog: () => void;
+  showArchived: boolean;
+  onToggleArchived: () => void;
 };
 
-export default function ActivityHeader({ activity, activityId, showLog, onToggleLog }: Props) {
+export default function ActivityHeader({
+  activity,
+  activityId,
+  showLog,
+  onToggleLog,
+  showArchived,
+  onToggleArchived,
+}: Props) {
   const api = useApi();
   const qc = useQueryClient();
   const [membersOpen, setMembersOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  // the share button's window resizes to whichever label is scrolled into view
+  const shareRef = useRef<HTMLSpanElement>(null);
+  const copiedRef = useRef<HTMLSpanElement>(null);
+  const [labelWidth, setLabelWidth] = useState<number>();
+  useLayoutEffect(() => {
+    setLabelWidth((copied ? copiedRef : shareRef).current?.offsetWidth);
+  }, [copied]);
 
   const membersQ = useQuery({
     queryKey: ["members", activityId],
@@ -46,52 +74,80 @@ export default function ActivityHeader({ activity, activityId, showLog, onToggle
   return (
     <>
     <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-1">
+      <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-2">
         <h1 className="font-semibold flex-1 truncate">{activity.title}</h1>
         {activity.archived_at && (
-          <span className="text-xs text-muted-foreground border rounded px-1.5 py-0.5 mr-1">Archived</span>
+          <span className="text-xs text-muted-foreground border rounded px-1.5 py-0.5">Archived</span>
         )}
-        {activity.has_pin && (
-          <button
-            className="text-xs text-muted-foreground border rounded px-1.5 py-0.5 mr-1 hover:bg-muted transition-colors"
-            onClick={() => setPinOpen(true)}
-          >
-            PIN
-          </button>
-        )}
-        {activity.archived_at ? (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Unarchive activity"
-            onClick={() => archiveMut.mutate(false)}
-          >
-            <ArchiveRestore />
+        <ButtonGroup>
+          {activity.has_pin && (
+            <Button variant="outline" size="sm" onClick={() => setPinOpen(true)}>
+              PIN
+            </Button>
+          )}
+          <Button variant="outline" size="sm" aria-label="Members" onClick={() => setMembersOpen(true)}>
+            <Users data-icon="inline-start" />
+            {membersQ.data?.length ?? activity.member_count}
           </Button>
-        ) : (
-          <ConfirmDelete
-            title="Archive this activity?"
-            actionLabel="Archive"
-            description="It moves to the archived list for everyone. You can unarchive it anytime."
-            onConfirm={() => archiveMut.mutate(true)}
-            trigger={
-              <Button variant="ghost" size="icon-sm" aria-label="Archive activity" className="text-muted-foreground">
-                <Archive />
-              </Button>
-            }
-          />
-        )}
-        <Button variant="ghost" size="sm" onClick={() => setMembersOpen(true)}>
-          <Users data-icon="inline-start" />
-          {membersQ.data?.length ?? activity.member_count}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={copyLink}>
-          {copied ? <Check data-icon="inline-start" className="text-green-600" /> : <Copy data-icon="inline-start" />}
-          {copied ? "Copied" : "Share"}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onToggleLog} className={showLog ? "text-primary bg-muted" : ""}>
-          Log
-        </Button>
+          {/* two stacked labels behind a one-row window; copying scrolls up, reset scrolls back,
+              and the window's width follows the visible label */}
+          <Button variant="outline" size="sm" onClick={copyLink} aria-live="polite">
+            <span
+              className="h-5 overflow-hidden transition-[width] duration-300"
+              style={{ width: labelWidth }}
+            >
+              <span className={cn("flex flex-col items-start transition-transform duration-300", copied && "-translate-y-5")}>
+                <span ref={shareRef} className="flex h-5 items-center gap-1"><Copy /> Share</span>
+                <span ref={copiedRef} className="flex h-5 items-center gap-1"><Check className="text-green-600" /> Copied</span>
+              </span>
+            </span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" size="icon-sm" aria-label="Activity menu">
+                  <MoreHorizontal />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setRenameOpen(true)}>
+                  <Pencil /> Rename
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuCheckboxItem checked={showLog} onCheckedChange={onToggleLog}>
+                  <ScrollText /> Log
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={showArchived} onCheckedChange={onToggleArchived}>
+                  <Eye /> Show archived
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                {activity.archived_at ? (
+                  <DropdownMenuItem onClick={() => archiveMut.mutate(false)}>
+                    <ArchiveRestore /> Unarchive
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem variant="destructive" onClick={() => setArchiveConfirmOpen(true)}>
+                    <Archive /> Archive
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </ButtonGroup>
+        <ConfirmDelete
+          title="Archive this activity?"
+          actionLabel="Archive"
+          description="It moves to the archived list for everyone. You can unarchive it anytime."
+          onConfirm={() => archiveMut.mutate(true)}
+          open={archiveConfirmOpen}
+          onOpenChange={setArchiveConfirmOpen}
+        />
       </div>
     </header>
 
@@ -105,7 +161,45 @@ export default function ActivityHeader({ activity, activityId, showLog, onToggle
       />
     )}
     {pinOpen && <PinSheet activity={activity} activityId={activityId} onClose={() => setPinOpen(false)} />}
+    {renameOpen && <RenameSheet activity={activity} activityId={activityId} onClose={() => setRenameOpen(false)} />}
     </>
+  );
+}
+
+function RenameSheet({
+  activity,
+  activityId,
+  onClose,
+}: {
+  activity: Activity;
+  activityId: string;
+  onClose: () => void;
+}) {
+  const api = useApi();
+  const qc = useQueryClient();
+  const [title, setTitle] = useState(activity.title);
+
+  const renameMut = useMutation({
+    mutationFn: () => api.patch(`/activities/${activityId}/`, { title: title.trim() }, activityId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["activity", activityId] });
+      qc.invalidateQueries({ queryKey: ["my-activities"] });
+      onClose();
+    },
+  });
+
+  return (
+    <BottomSheet onClose={onClose} title="Rename activity">
+      <h2 className="font-semibold text-lg">Rename activity</h2>
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+      {renameMut.isError && <p className="text-sm text-destructive">Something went wrong.</p>}
+      <div className="flex gap-2 justify-end">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button onClick={() => renameMut.mutate()} disabled={renameMut.isPending || !title.trim()}>
+          {renameMut.isPending ? "Saving…" : "Rename"}
+        </Button>
+      </div>
+    </BottomSheet>
   );
 }
 
