@@ -151,6 +151,12 @@
   50%       { transform: translateY(-10px); }
 }
 
+/* landing demo: time-left fill inside the active tab */
+@keyframes demo-progress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
 
 /* Motion here is decorative only — honor the OS-level opt-out. */
 @media (prefers-reduced-motion: reduce) {
