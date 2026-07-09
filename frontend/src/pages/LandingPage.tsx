@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import ChatIllustration from "@/components/landing/ChatIllustration";
+import DemoFeed from "@/components/landing/DemoFeed";
 import {
   Collapsible,
   CollapsibleContent,
@@ -14,8 +14,6 @@ import type { Activity, User } from "@/api/types";
 import UserAvatar from "@/components/UserAvatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { STATUS_TOGGLE, type VoteStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 export default function LandingPage() {
@@ -163,19 +161,130 @@ function MarketingHome() {
         </div>
       </section>
 
-      {/* How it works */}
+      {/* Live demo */}
       <section className="py-10 flex flex-col gap-6 border-t">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             How it works
           </p>
           <h2 className="text-xl font-semibold mt-1">Try it right here</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            These are the real cards from an activity feed, filled with sample
+            data. Vote away — nothing is saved.
+          </p>
         </div>
-        <div className="flex flex-col gap-4">
-          <DemoPoll />
-          <DemoProposal />
-          <DemoEvent />
+        <DemoFeed />
+      </section>
+
+      {/* What it is */}
+      <section className="py-10 flex flex-col gap-4 border-t">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            What it is
+          </p>
+          <h2 className="text-xl font-semibold mt-1">
+            Find a date your whole group can make
+          </h2>
         </div>
+        <p className="text-muted-foreground leading-relaxed">
+          small.management helps groups pick dates and make small decisions
+          together — like Doodle or When2Meet, but private, self-hostable, and
+          built for phones. Create an activity, drop the link in your group
+          chat, and everyone can vote right away: no sign-up, no email, no app
+          to install.
+        </p>
+        <p className="text-muted-foreground leading-relaxed">
+          It's made for the recurring chaos of real groups: the friend circle
+          planning a getaway, the board-game round looking for its next slot,
+          the club picking a tournament weekend, the family sorting out the
+          holidays.
+        </p>
+      </section>
+
+      {/* Principles */}
+      <section className="py-10 flex flex-col gap-6 border-t">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Principles
+          </p>
+          <h2 className="text-xl font-semibold mt-1">Built on a few opinions</h2>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Principle title="No accounts required">
+            Guests join with the link, pick a name, and vote. An account is
+            optional — it only adds access from other devices.
+          </Principle>
+          <Principle title="No admin">
+            Every member has equal power: anyone can add options, finish a
+            vote, or archive a card. The activity log keeps the group
+            accountable to itself.
+          </Principle>
+          <Principle title="Private by default">
+            Activities are invite-link only, optionally PIN-protected. No
+            trackers, no ads, no data mining.
+          </Principle>
+          <Principle title="Yours to host">
+            Open source and fair-code licensed. Run it on your own server and
+            your group's plans never leave it.
+          </Principle>
+        </div>
+      </section>
+
+      {/* Small features */}
+      <section className="py-10 flex flex-col gap-6 border-t">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            The small things
+          </p>
+          <h2 className="text-xl font-semibold mt-1">
+            Details that carry their weight
+          </h2>
+        </div>
+        <ul className="grid gap-x-6 gap-y-4 sm:grid-cols-2 text-sm">
+          <Feature title="Paint your days">
+            Drag across the calendar to vote many days at once — built for
+            thumbs, not tiny checkboxes.
+          </Feature>
+          <Feature title="Crowned leaders">
+            The option or day currently winning wears a little crown, so the
+            group sees where it's heading.
+          </Feature>
+          <Feature title="Finish voting, reversibly">
+            Anyone can close a poll when it's decided — and anyone can reopen
+            it. No deadlines are ever enforced.
+          </Feature>
+          <Feature title="Nothing is deleted">
+            Cards are archived, not destroyed, and every action lands in the
+            activity log for everyone to see.
+          </Feature>
+          <Feature title="Threads on everything">
+            Every poll and event has its own comments with replies, so the
+            discussion stays next to the decision.
+          </Feature>
+          <Feature title="Cycles">
+            Groups that meet again and again start a fresh round while keeping
+            the whole history one scroll away.
+          </Feature>
+          <Feature title="Add to calendar">
+            Events export as .ics files, generated right in your browser — no
+            calendar account linked.
+          </Feature>
+          <Feature title="One link is the invite">
+            Share the activity link anywhere. Whoever has it is in — add a PIN
+            if you want a lock on the door.
+          </Feature>
+        </ul>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="py-12 border-t flex flex-col items-center gap-3 text-center">
+        <h2 className="text-xl font-semibold">Ready when your group is</h2>
+        <p className="text-sm text-muted-foreground">
+          Creating an activity takes seconds and doesn't ask for anything.
+        </p>
+        <Link to="/new" className={cn(buttonVariants({ size: "lg" }), "mt-2")}>
+          Create an activity
+        </Link>
       </section>
 
       {/* Footer */}
@@ -199,197 +308,22 @@ function Squiggle({ children }: { children: React.ReactNode }) {
   return <span className="marker-highlight">{children}</span>;
 }
 
-// ─── Demo components (local state, no API) ────────────────────────────────────
+// ─── Copy blocks ──────────────────────────────────────────────────────────────
 
-type Vote = VoteStatus;
-
-function VoteBar({
-  yes,
-  maybe,
-  no,
-  total,
-}: {
-  yes: number;
-  maybe: number;
-  no: number;
-  total: number;
-}) {
-  if (total === 0) return null;
+function Principle({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex rounded-full overflow-hidden h-1.5 bg-muted mt-1.5">
-      <div
-        className="bg-green-500 transition-all duration-300"
-        style={{ width: `${(yes / total) * 100}%` }}
-      />
-      <div
-        className="bg-yellow-400 transition-all duration-300"
-        style={{ width: `${(maybe / total) * 100}%` }}
-      />
-      <div
-        className="bg-red-400 transition-all duration-300"
-        style={{ width: `${(no / total) * 100}%` }}
-      />
+    <div className="flex flex-col gap-1.5">
+      <h3 className="font-medium">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed">{children}</p>
     </div>
   );
 }
 
-function DemoPoll() {
-  const slots = [
-    { id: 1, label: "Saturday, Aug 2", base: { yes: 3, maybe: 1, no: 0 } },
-    { id: 2, label: "Sunday, Aug 3", base: { yes: 1, maybe: 2, no: 1 } },
-    { id: 3, label: "Saturday, Aug 9", base: { yes: 4, maybe: 0, no: 1 } },
-  ] as const;
-  const [votes, setVotes] = useState<Record<number, Vote | null>>({});
-
+function Feature({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border rounded-lg p-4 flex flex-col gap-3">
-      <div>
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">
-          Poll
-        </span>
-        <h3 className="font-medium">When works for a weekend getaway?</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          created by Alex · 5 members voted
-        </p>
-      </div>
-      <div className="flex flex-col gap-3">
-        {slots.map((slot) => {
-          const my = votes[slot.id];
-          const yes = slot.base.yes + (my === "yes" ? 1 : 0);
-          const maybe = slot.base.maybe + (my === "maybe" ? 1 : 0);
-          const no = slot.base.no + (my === "no" ? 1 : 0);
-          return (
-            <div key={slot.id}>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm">{slot.label}</span>
-                <ToggleGroup
-                  value={my ? [my] : []}
-                  onValueChange={(v) =>
-                    setVotes((p) => ({ ...p, [slot.id]: (v[0] as Vote) ?? null }))
-                  }
-                  variant="outline"
-                  size="sm"
-                  spacing={1}
-                  className="shrink-0"
-                >
-                  {(["yes", "maybe", "no"] as const).map((v) => (
-                    <ToggleGroupItem
-                      key={v}
-                      value={v}
-                      className={cn("text-xs", STATUS_TOGGLE[v])}
-                    >
-                      {v === "yes"
-                        ? `✓ ${yes}`
-                        : v === "maybe"
-                          ? `~ ${maybe}`
-                          : `✗ ${no}`}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </div>
-              <VoteBar
-                yes={yes}
-                maybe={maybe}
-                no={no}
-                total={yes + maybe + no}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function DemoProposal() {
-  const [myVote, setMyVote] = useState<Vote | null>(null);
-  const base = { yes: 4, maybe: 1, no: 0 };
-  const yes = base.yes + (myVote === "yes" ? 1 : 0);
-  const maybe = base.maybe + (myVote === "maybe" ? 1 : 0);
-  const no = base.no + (myVote === "no" ? 1 : 0);
-
-  return (
-    <div className="border rounded-lg p-4 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Poll
-          </span>
-          <h3 className="font-medium">Saturday, Aug 9?</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            suggested by Jordan · from the calendar votes
-          </p>
-        </div>
-        <div className="flex gap-2 text-xs shrink-0 mt-1">
-          <span className="text-green-600">{yes} yes</span>
-          <span className="text-yellow-600">{maybe} maybe</span>
-          <span className="text-red-500">{no} no</span>
-        </div>
-      </div>
-      <VoteBar yes={yes} maybe={maybe} no={no} total={yes + maybe + no} />
-      <ToggleGroup
-        value={myVote ? [myVote] : []}
-        onValueChange={(v) => setMyVote((v[0] as Vote) ?? null)}
-        variant="outline"
-        className="flex-wrap"
-      >
-        {(["yes", "maybe", "no"] as const).map((v) => (
-          <ToggleGroupItem key={v} value={v} className={cn("font-normal", STATUS_TOGGLE[v])}>
-            {v === "yes" ? "I'm in" : v === "maybe" ? "Maybe" : "Can't make it"}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-    </div>
-  );
-}
-
-function DemoEvent() {
-  type RSVP = "going" | "maybe" | "not_going";
-  const [rsvp, setRsvp] = useState<RSVP | null>(null);
-  const base = { going: 4, maybe: 1, not_going: 0 };
-  const going = base.going + (rsvp === "going" ? 1 : 0);
-  const maybe = base.maybe + (rsvp === "maybe" ? 1 : 0);
-  const not_going = base.not_going + (rsvp === "not_going" ? 1 : 0);
-
-  return (
-    <div className="border-2 border-primary/20 bg-primary/5 rounded-lg p-4 flex flex-col gap-3">
-      <div>
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">
-          Event · it's happening
-        </span>
-        <h3 className="text-lg font-semibold">Saturday, August 9</h3>
-        <p className="text-sm text-muted-foreground">
-          Weekend getaway · by the lake
-        </p>
-      </div>
-      <div className="flex gap-4 text-xs">
-        <span className="text-green-600">{going} going</span>
-        <span className="text-yellow-600">{maybe} maybe</span>
-        <span className="text-muted-foreground">{not_going} not going</span>
-      </div>
-      <ToggleGroup
-        value={rsvp ? [rsvp] : []}
-        onValueChange={(v) => setRsvp((v[0] as RSVP) ?? null)}
-        variant="outline"
-        className="flex-wrap"
-      >
-        {(["going", "maybe", "not_going"] as const).map((v) => (
-          <ToggleGroupItem
-            key={v}
-            value={v}
-            className={cn(
-              "font-normal",
-              STATUS_TOGGLE[v === "going" ? "yes" : v === "maybe" ? "maybe" : "no"],
-            )}
-          >
-            {v === "going"
-              ? "Going"
-              : v === "maybe"
-                ? "Maybe"
-                : "Can't make it"}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-    </div>
+    <li className="flex flex-col gap-0.5">
+      <span className="font-medium">{title}</span>
+      <span className="text-muted-foreground leading-relaxed">{children}</span>
+    </li>
   );
 }

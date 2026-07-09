@@ -14,7 +14,7 @@ import { cn, downloadIcs, formatDay, formatTime, isEventPast } from "@/lib/utils
 type Props = { event: Event; activityId: string };
 type RsvpStatus = RSVP["status"];
 
-const ROWS: { status: RsvpStatus; icon: string; label: string; bar: string; selected: string }[] = [
+export const ROWS: { status: RsvpStatus; icon: string; label: string; bar: string; selected: string }[] = [
   { status: "going", icon: "✓", label: "going", bar: "bg-green-600", selected: "bg-green-100 text-green-700 border-green-300" },
   { status: "maybe", icon: "~", label: "maybe", bar: "bg-yellow-500", selected: "bg-yellow-100 text-yellow-700 border-yellow-300" },
   { status: "not_going", icon: "✗", label: "not going", bar: "bg-red-500", selected: "bg-red-100 text-red-700 border-red-300" },
