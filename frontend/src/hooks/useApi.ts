@@ -31,9 +31,10 @@ export function useApi() {
         token,
         sessionToken: activityId ? getSessionToken(activityId) : null,
       }),
-    del: <T>(path: string, activityId?: string) =>
+    del: <T>(path: string, activityId?: string, body?: unknown) =>
       request<T>(path, {
         method: "DELETE",
+        body,
         token,
         sessionToken: activityId ? getSessionToken(activityId) : null,
       }),

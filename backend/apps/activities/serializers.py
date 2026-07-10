@@ -4,13 +4,17 @@ from .models import Activity, Member, Cycle, Log, Comment
 
 class MemberSerializer(serializers.ModelSerializer):
     is_anonymous = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     def get_is_anonymous(self, obj):
         return obj.user_id is None
 
+    def get_avatar(self, obj):
+        return obj.user.avatar if obj.user_id else None
+
     class Meta:
         model = Member
-        fields = ["id", "display_name", "is_anonymous", "joined_at"]
+        fields = ["id", "display_name", "is_anonymous", "avatar", "joined_at"]
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -95,6 +99,6 @@ class LatestCommentsMixin:
         return obj.comments.filter(deleted_at__isnull=True).count()
 
     def get_latest_comments(self, obj):
-        qs = obj.comments.filter(deleted_at__isnull=True).select_related("member")
+        qs = obj.comments.filter(deleted_at__isnull=True).select_related("member__user")
         newest = list(qs.order_by("-created_at")[:FEED_COMMENT_COUNT])
         return CommentSerializer(reversed(newest), many=True).data

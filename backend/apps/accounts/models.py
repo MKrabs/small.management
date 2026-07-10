@@ -7,6 +7,7 @@ class User(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid_lib.uuid4, editable=False)
     display_name = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=128)
+    avatar = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def set_password(self, raw_password):

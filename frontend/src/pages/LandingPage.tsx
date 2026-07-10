@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, User } from "@/api/types";
-import UserAvatar from "@/components/UserAvatar";
+import UserAvatar, { nameColor } from "@/components/UserAvatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
@@ -35,9 +35,9 @@ function LoggedInHome({ user }: { user: User }) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-8">
       <div className="flex items-center gap-4">
-        <UserAvatar name={user.display_name} className="size-12" textClassName="text-lg" />
+        <UserAvatar name={user.display_name} avatar={user.avatar} className="size-12" textClassName="text-lg" />
         <div>
-          <p className="font-semibold">{user.display_name}</p>
+          <p className="font-semibold" style={{ color: nameColor(user.avatar) }}>{user.display_name}</p>
           <p className="text-xs text-muted-foreground">
             Member since{" "}
             {new Date(user.created_at).toLocaleDateString(undefined, {

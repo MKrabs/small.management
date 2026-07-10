@@ -5,6 +5,7 @@ type AuthCtx = {
   user: User | null;
   token: string | null;
   login: (user: User, token: string) => void;
+  updateUser: (user: User) => void;
   logout: () => void;
   getSessionToken: (activityId: string) => string | null;
   setSessionToken: (activityId: string, token: string) => void;
@@ -28,6 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("token", t);
   }, []);
 
+  const updateUser = useCallback((u: User) => {
+    setUser(u);
+    localStorage.setItem("user", JSON.stringify(u));
+  }, []);
+
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
@@ -45,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ user, token, login, logout, getSessionToken, setSessionToken }}>
+    <Ctx.Provider value={{ user, token, login, updateUser, logout, getSessionToken, setSessionToken }}>
       {children}
     </Ctx.Provider>
   );

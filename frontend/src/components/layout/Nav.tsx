@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -6,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ProfileDialog from "@/components/ProfileDialog";
 import { useAuth } from "@/contexts/auth";
 import { useApi } from "@/hooks/useApi";
 
@@ -13,6 +15,8 @@ export default function Nav() {
   const { user, logout } = useAuth();
   const api = useApi();
   const navigate = useNavigate();
+  // controlled: the dropdown unmounts before a nested trigger could fire (see ConfirmDelete)
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -30,18 +34,24 @@ export default function Nav() {
         small.management
       </Link>
       {user ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
-            {user.display_name}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground transition-colors outline-none">
+              {user.display_name}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
+        </>
       ) : (
         <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           Log in

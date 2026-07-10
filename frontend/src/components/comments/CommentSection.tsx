@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useApi } from "@/hooks/useApi";
 import type { Comment } from "@/api/types";
 import ConfirmDelete from "@/components/ConfirmDelete";
+import { nameColor } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
@@ -87,7 +88,7 @@ function CommentNode({
   return (
     <div className={cn("flex flex-col gap-1", warning && "rounded-md bg-yellow-500/10 p-2 -mx-2")}>
       <div className="flex items-baseline gap-2">
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium" style={{ color: nameColor(comment.member?.avatar) }}>
           {comment.member?.display_name ?? (warning ? "System" : "someone")}
         </span>
         <span className="text-xs text-muted-foreground">{timeAgo(comment.created_at)}</span>

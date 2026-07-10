@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import BottomSheet from "@/components/layout/BottomSheet";
 import ConfirmDelete from "@/components/ConfirmDelete";
-import UserAvatar from "@/components/UserAvatar";
+import UserAvatar, { nameColor } from "@/components/UserAvatar";
 import { cn, timeAgo } from "@/lib/utils";
 
 type Props = {
@@ -252,8 +252,8 @@ function MembersSheet({
           // identical row markup in both modes so the lists line up
           const row = (
             <>
-              <UserAvatar name={m.display_name} className="size-6 text-[10px]" />
-              <span className="text-sm font-medium flex-1 truncate">
+              <UserAvatar name={m.display_name} avatar={m.avatar} className="size-6 text-[10px]" />
+              <span className="text-sm font-medium flex-1 truncate" style={{ color: nameColor(m.avatar) }}>
                 {m.display_name}
                 {m.id === activity.me?.id && (
                   <span className="text-xs font-normal text-muted-foreground"> (you)</span>

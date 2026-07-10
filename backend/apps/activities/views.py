@@ -126,18 +126,18 @@ class FeedView(ActivityMixin, APIView):
         for obj in activity.cycles.all():
             items.append({"type": "cycle", "created_at": obj.created_at, "data": CycleSerializer(obj).data})
 
-        for obj in activity.polls.select_related("created_by").all():
+        for obj in activity.polls.select_related("created_by__user").all():
             items.append({"type": "poll", "created_at": obj.created_at, "data": PollSerializer(obj, context={"member": member}).data})
 
-        for obj in activity.events.select_related("created_by").prefetch_related("rsvps__member").all():
+        for obj in activity.events.select_related("created_by__user").prefetch_related("rsvps__member__user").all():
             items.append({"type": "event", "created_at": obj.created_at, "data": EventSerializer(obj).data})
 
         # standalone comments only — card-attached ones live on their card's page
-        for obj in activity.comments.filter(parent=None, poll=None, event=None).select_related("member").all():
+        for obj in activity.comments.filter(parent=None, poll=None, event=None).select_related("member__user").all():
             items.append({"type": "comment", "created_at": obj.created_at, "data": CommentSerializer(obj).data})
 
         if include_logs:
-            for obj in activity.logs.select_related("member").all():
+            for obj in activity.logs.select_related("member__user").all():
                 items.append({"type": "log", "created_at": obj.created_at, "data": LogSerializer(obj).data})
 
         items.sort(key=lambda x: x["created_at"], reverse=True)
@@ -150,7 +150,7 @@ class FeedView(ActivityMixin, APIView):
 class MemberListView(ActivityMixin, APIView):
     def get(self, request, activity_id):
         self.get_member()
-        members = self.get_activity().members.all()
+        members = self.get_activity().members.select_related("user").all()
         return Response(MemberSerializer(members, many=True).data)
 
 
@@ -208,7 +208,7 @@ class MemberClaimView(ActivityMixin, APIView):
 class LogListView(ActivityMixin, APIView):
     def get(self, request, activity_id):
         self.get_member()
-        logs = self.get_activity().logs.select_related("member").all()
+        logs = self.get_activity().logs.select_related("member__user").all()
         return Response(LogSerializer(logs, many=True).data)
 
 
@@ -256,13 +256,13 @@ class CommentListCreateView(ActivityMixin, APIView):
         self.get_member()
         parent_id = request.query_params.get("parent")
         if parent_id:
-            qs = self.get_activity().comments.filter(parent_id=parent_id).select_related("member")
+            qs = self.get_activity().comments.filter(parent_id=parent_id).select_related("member__user")
             return Response(CommentSerializer(qs, many=True).data)
         thread_id = request.query_params.get("thread")
         if thread_id:
             # whole reply subtree below one standalone comment; replies inherit
             # poll=None/event=None, so nest the small standalone set in memory
-            nodes = self.get_activity().comments.filter(poll=None, event=None).select_related("member")
+            nodes = self.get_activity().comments.filter(poll=None, event=None).select_related("member__user")
             by_parent = {}
             for c in nodes:
                 by_parent.setdefault(c.parent_id, []).append(c)
@@ -272,7 +272,7 @@ class CommentListCreateView(ActivityMixin, APIView):
                     result.append(c)
                     stack.append(c.id)
             return Response(CommentSerializer(result, many=True).data)
-        qs = self.get_activity().comments.select_related("member")
+        qs = self.get_activity().comments.select_related("member__user")
         poll_id = request.query_params.get("poll")
         event_id = request.query_params.get("event")
         # target queries return the whole tree; the client nests by parent_id

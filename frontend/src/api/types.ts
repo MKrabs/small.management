@@ -1,6 +1,24 @@
+export type AvatarShape = "circle" | "square" | "trapezoid" | "cloud" | "heart" | "diamond";
+
+export type PaletteToken =
+  | "red" | "orange" | "amber" | "lime" | "green"
+  | "teal" | "sky" | "blue" | "violet" | "pink";
+
+export type AvatarConfig = {
+  /** Characters shown in the avatar; "" = use name initials. */
+  chars: string;
+  bg: PaletteToken;
+  border: PaletteToken;
+  name_color: PaletteToken;
+  shape: AvatarShape;
+  /** Degrees, 0–345 in steps of 15. Applied to the shape only. */
+  rotation: number;
+};
+
 export type User = {
   id: string;
   display_name: string;
+  avatar: AvatarConfig | null;
   created_at: string;
 };
 
@@ -8,6 +26,7 @@ export type Member = {
   id: string;
   display_name: string;
   is_anonymous: boolean;
+  avatar: AvatarConfig | null;
   joined_at: string;
 };
 
@@ -60,7 +79,7 @@ export type PollOption = {
   id: number;
   label: string;
   created_by: Member | null;
-  voters: { id: string; display_name: string }[];
+  voters: { id: string; display_name: string; avatar: AvatarConfig | null }[];
   my_vote: boolean;
   created_at: string;
   deleted_at: string | null;

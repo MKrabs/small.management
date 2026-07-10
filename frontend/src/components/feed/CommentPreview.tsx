@@ -1,4 +1,5 @@
 import type { Comment } from "@/api/types";
+import { nameColor } from "@/components/UserAvatar";
 import { Separator } from "@/components/ui/separator";
 import { cn, isWarning, timeAgo } from "@/lib/utils";
 
@@ -21,7 +22,9 @@ export default function CommentPreview({ comments, total }: { comments: Comment[
           >
             {c.parent_id && <span className="text-muted-foreground/60 shrink-0">↳</span>}
             <span className="truncate flex-1">
-              <span className="font-medium">{c.member?.display_name ?? (warning ? "System" : "someone")}</span>{" "}
+              <span className="font-medium" style={{ color: nameColor(c.member?.avatar) }}>
+                {c.member?.display_name ?? (warning ? "System" : "someone")}
+              </span>{" "}
               <span className="text-muted-foreground">{c.body}</span>
             </span>
             <span className="text-muted-foreground/60 shrink-0">{timeAgo(c.created_at)}</span>

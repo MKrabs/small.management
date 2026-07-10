@@ -18,8 +18,12 @@ class OptionSerializer(serializers.ModelSerializer):
 
     def get_voters(self, obj):
         return [
-            {"id": str(v.member.id), "display_name": v.member.display_name}
-            for v in obj.votes.select_related("member").order_by("created_at")
+            {
+                "id": str(v.member.id),
+                "display_name": v.member.display_name,
+                "avatar": v.member.user.avatar if v.member.user_id else None,
+            }
+            for v in obj.votes.select_related("member__user").order_by("created_at")
         ]
 
     def get_my_vote(self, obj):
@@ -67,14 +71,14 @@ class PollSerializer(LatestCommentsMixin, serializers.ModelSerializer):
     def get_options(self, obj):
         if obj.kind != PollKind.CHOICE:
             return None
-        qs = obj.options.filter(deleted_at__isnull=True).select_related("created_by").prefetch_related("votes__member")
+        qs = obj.options.filter(deleted_at__isnull=True).select_related("created_by__user").prefetch_related("votes__member__user")
         return OptionSerializer(qs, many=True, context=self.context).data
 
     # date/range cards render a calendar with everyone's votes directly on the feed
     def get_slots(self, obj):
         if obj.kind not in (PollKind.DATE, PollKind.RANGE):
             return None
-        qs = obj.slots.filter(deleted_at__isnull=True).select_related("member")
+        qs = obj.slots.filter(deleted_at__isnull=True).select_related("member__user")
         return SlotSerializer(qs, many=True).data
 
     class Meta:

@@ -20,7 +20,7 @@ def _locked(poll):
 class PollListCreateView(ActivityMixin, APIView):
     def get(self, request, activity_id):
         member = self.get_member()
-        polls = self.get_activity().polls.select_related("created_by").all()
+        polls = self.get_activity().polls.select_related("created_by__user").all()
         return Response(PollSerializer(polls, many=True, context={"member": member}).data)
 
     @transaction.atomic
@@ -217,7 +217,7 @@ class SlotListCreateView(ActivityMixin, APIView):
     def get(self, request, activity_id, poll_id):
         self.get_member()
         poll = get_object_or_404(Poll, id=poll_id, activity=self.get_activity())
-        slots = poll.slots.filter(deleted_at__isnull=True).select_related("member")
+        slots = poll.slots.filter(deleted_at__isnull=True).select_related("member__user")
         return Response(SlotSerializer(slots, many=True).data)
 
     def post(self, request, activity_id, poll_id):

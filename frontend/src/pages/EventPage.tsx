@@ -230,7 +230,7 @@ export default function EventPage() {
                   </p>
                   {group.map((r) => (
                     <span key={r.id} className="flex items-center gap-2 text-sm">
-                      <UserAvatar name={r.member.display_name} className="size-5" textClassName="text-[10px]" />
+                      <UserAvatar name={r.member.display_name} avatar={r.member.avatar} className="size-5" textClassName="text-[10px]" />
                       <span className="truncate">{r.member.display_name}</span>
                       {r.comment && (
                         <span className="text-xs text-muted-foreground truncate">“{r.comment}”</span>
@@ -248,7 +248,7 @@ export default function EventPage() {
                   <p className="text-sm font-medium">no answer ({noAnswer.length})</p>
                   {noAnswer.map((m) => (
                     <span key={m.id} className="flex items-center gap-2 text-sm">
-                      <UserAvatar name={m.display_name} className="size-5" textClassName="text-[10px]" />
+                      <UserAvatar name={m.display_name} avatar={m.avatar} className="size-5" textClassName="text-[10px]" />
                       <span className="truncate">{m.display_name}</span>
                     </span>
                   ))}

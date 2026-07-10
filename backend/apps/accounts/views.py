@@ -58,14 +58,24 @@ class MeView(APIView):
         s.is_valid(raise_exception=True)
         user = request.user
         if "display_name" in s.validated_data:
-            user.display_name = s.validated_data["display_name"]
+            name = s.validated_data["display_name"]
+            if User.objects.exclude(pk=user.pk).filter(display_name=name).exists():
+                return Response({"display_name": ["This name is already taken"]}, status=400)
+            user.display_name = name
         if "password" in s.validated_data:
+            if not user.check_password(s.validated_data["current_password"]):
+                return Response({"current_password": ["Incorrect password"]}, status=400)
             user.set_password(s.validated_data["password"])
+            user.tokens.exclude(pk=request.auth.pk).delete()
+        if "avatar" in s.validated_data:
+            user.avatar = s.validated_data["avatar"]
         user.save()
         return Response(UserSerializer(user).data)
 
     def delete(self, request):
         if err := self._require_user(request):
             return err
+        if not request.user.check_password(str(request.data.get("password") or "")):
+            return Response({"password": ["Incorrect password"]}, status=400)
         request.user.delete()
         return Response(status=204)

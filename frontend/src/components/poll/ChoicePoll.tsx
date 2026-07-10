@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { GripVertical, Plus, X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
-import type { Poll, PollOption } from "@/api/types";
+import type { AvatarConfig, Poll, PollOption } from "@/api/types";
 import Crown from "@/components/Crown";
 import UserAvatar from "@/components/UserAvatar";
 import ConfirmDelete from "@/components/ConfirmDelete";
@@ -273,7 +273,7 @@ function AddOption({
   );
 }
 
-type Voter = { id: string; display_name: string };
+type Voter = { id: string; display_name: string; avatar?: AvatarConfig | null };
 
 /** Keeps just-removed voters mounted briefly, flagged `leaving`, so they can animate out.
  * ponytail: leavers re-append at the end and each removal runs its own sweep timer —
@@ -306,6 +306,7 @@ export function AvatarRow({ voters, max = 4 }: { voters: Voter[]; max?: number }
         <UserAvatar
           key={v.id}
           name={v.display_name}
+          avatar={v.avatar}
           className={cn("size-5", v.leaving && "opacity-0 scale-75 transition-all duration-200")}
           textClassName="text-[10px]"
         />

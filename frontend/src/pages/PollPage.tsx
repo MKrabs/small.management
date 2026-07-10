@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen, Plus } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
-import type { Poll, PollKind, PollOption, Slot } from "@/api/types";
+import type { AvatarConfig, Poll, PollKind, PollOption, Slot } from "@/api/types";
 import UserAvatar from "@/components/UserAvatar";
 import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
@@ -252,7 +252,7 @@ function ChoiceBreakdown({ options }: { options: PollOption[] }) {
             <p className="text-sm font-medium">{o.label}</p>
             {o.voters.map((v) => (
               <span key={v.id} className="flex items-center gap-2 text-sm">
-                <UserAvatar name={v.display_name} className="size-5" textClassName="text-[10px]" />
+                <UserAvatar name={v.display_name} avatar={v.avatar} className="size-5" textClassName="text-[10px]" />
                 {v.display_name}
               </span>
             ))}
@@ -269,9 +269,9 @@ function MemberBreakdown({ slots, kind }: { slots: Slot[]; kind: PollKind }) {
   const showStatus = kind === "datetime";
 
   const byMember = useMemo(() => {
-    const map = new Map<string, { name: string; slots: Slot[] }>();
+    const map = new Map<string, { name: string; avatar: AvatarConfig | null; slots: Slot[] }>();
     for (const s of slots) {
-      const entry = map.get(s.member.id) ?? { name: s.member.display_name, slots: [] };
+      const entry = map.get(s.member.id) ?? { name: s.member.display_name, avatar: s.member.avatar, slots: [] };
       entry.slots.push(s);
       map.set(s.member.id, entry);
     }
@@ -319,7 +319,7 @@ function MemberBreakdown({ slots, kind }: { slots: Slot[]; kind: PollKind }) {
           byMember.map((m) => (
             <div key={m.name} className="flex flex-col gap-1">
               <p className="text-sm font-medium flex items-center gap-2">
-                <UserAvatar name={m.name} className="size-5" textClassName="text-[10px]" />
+                <UserAvatar name={m.name} avatar={m.avatar} className="size-5" textClassName="text-[10px]" />
                 {m.name}
               </p>
               {m.slots.map((s) => (
@@ -334,7 +334,7 @@ function MemberBreakdown({ slots, kind }: { slots: Slot[]; kind: PollKind }) {
               <p className="text-sm font-medium">{g.label}</p>
               {g.slots.map((s) => (
                 <span key={s.id} className="flex items-center gap-2 text-sm">
-                  <UserAvatar name={s.member.display_name} className="size-5" textClassName="text-[10px]" />
+                  <UserAvatar name={s.member.display_name} avatar={s.member.avatar} className="size-5" textClassName="text-[10px]" />
                   {showStatus && (
                     <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[s.status]}`}>
                       {STATUS_ICON[s.status]}

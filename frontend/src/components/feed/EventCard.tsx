@@ -98,7 +98,7 @@ export default function EventCard({ event, activityId }: Props) {
                       />
                     </div>
                     <div className="flex justify-end">
-                      <AvatarRow voters={voters.map((r) => ({ id: r.member.id, display_name: r.member.display_name }))} />
+                      <AvatarRow voters={voters.map((r) => ({ id: r.member.id, display_name: r.member.display_name, avatar: r.member.avatar }))} />
                     </div>
                   </div>
                   <button
