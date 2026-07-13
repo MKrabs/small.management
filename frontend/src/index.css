@@ -157,6 +157,12 @@
   to   { transform: scaleX(1); }
 }
 
+/* range chip: changed characters roll in from below, odometer-style */
+@keyframes digit-roll {
+  from { transform: translateY(0.7em); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
 
 /* Motion here is decorative only — honor the OS-level opt-out. */
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,8 @@ type Props = {
   /** Fired live while dragging and once on release with the covered days. Enables drag selection. */
   onDragMove?: (dates: string[]) => void;
   onDragEnd?: (dates: string[]) => void;
+  /** Mouse-only: the day under the cursor, null when leaving the grid or over past days. */
+  onHover?: (dateStr: string | null) => void;
   /** "range" spans start→current; "paint" collects only days the pointer touched. */
   dragMode?: "range" | "paint";
 };
@@ -37,7 +39,7 @@ type Props = {
  * Monday-first month calendar with tap and drag-select via pointer events.
  * Past days are disabled. Consumers style cells through dayCell.
  */
-export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDragMove, onDragEnd, dragMode = "range" }: Props) {
+export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDragMove, onDragEnd, onHover, dragMode = "range" }: Props) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStr = toDateStr(today);
@@ -54,6 +56,11 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
   ];
 
   const drag = useRef<{ start: string; current: string; painted: string[] } | null>(null);
+
+  // grace period before a hover ghost disappears when the mouse leaves the grid
+  const HOVER_CLEAR_MS = 200;
+  const hoverClear = useRef<number | undefined>(undefined);
+  useEffect(() => () => clearTimeout(hoverClear.current), []);
 
   const dayAt = (x: number, y: number): string | null => {
     const el = document.elementFromPoint(x, y)?.closest("[data-date]");
@@ -74,12 +81,23 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
   };
 
   const handleMove = (e: React.PointerEvent) => {
-    if (!drag.current || !onDragEnd) return;
-    const day = dayAt(e.clientX, e.clientY);
-    if (day && day !== drag.current.current) {
-      drag.current.current = day;
-      if (!drag.current.painted.includes(day)) drag.current.painted.push(day);
-      onDragMove?.(covered());
+    if (drag.current && onDragEnd) {
+      const day = dayAt(e.clientX, e.clientY);
+      if (day && day !== drag.current.current) {
+        drag.current.current = day;
+        if (!drag.current.painted.includes(day)) drag.current.painted.push(day);
+        onDragMove?.(covered());
+      }
+      return;
+    }
+    if (onHover && e.pointerType === "mouse") {
+      // sticky: gaps between cells (and past days) report null — keep the last
+      // hovered day so range ghosts don't flicker while crossing them
+      const day = dayAt(e.clientX, e.clientY);
+      if (day) {
+        clearTimeout(hoverClear.current);
+        onHover(day);
+      }
     }
   };
 
@@ -131,6 +149,11 @@ export default function MonthGrid({ month, onMonthChange, dayCell, onTap, onDrag
         onPointerMove={handleMove}
         onPointerUp={handleUp}
         onPointerCancel={() => (drag.current = null)}
+        onPointerLeave={() => {
+          if (!onHover) return;
+          clearTimeout(hoverClear.current);
+          hoverClear.current = window.setTimeout(() => onHover(null), HOVER_CLEAR_MS);
+        }}
       >
         {cells.map((d, i) => {
           if (!d) return <span key={`blank-${i}`} />;

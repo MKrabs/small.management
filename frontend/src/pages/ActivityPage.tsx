@@ -74,15 +74,17 @@ export default function ActivityPage() {
         )}
       </main>
 
-      {/* FAB */}
-      <div className="fixed bottom-6 right-6 z-20">
-        <Button
-          size="lg"
-          className="rounded-full shadow-lg h-14 w-14 text-2xl p-0"
-          onClick={() => setSheet("menu")}
-        >
-          +
-        </Button>
+      {/* FAB — aligned to the content column, not the viewport corner */}
+      <div className="fixed bottom-6 inset-x-0 z-20 pointer-events-none">
+        <div className="mx-auto max-w-2xl px-4 flex justify-end">
+          <Button
+            size="lg"
+            className="pointer-events-auto rounded-full shadow-lg h-14 w-14 text-2xl p-0"
+            onClick={() => setSheet("menu")}
+          >
+            +
+          </Button>
+        </div>
       </div>
 
       {sheet === "menu" && (
