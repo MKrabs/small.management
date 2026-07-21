@@ -11,6 +11,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "v0.0.11",
+    date: "2026-07-21",
+    title: "The homepage demo is the app now",
+    items: [
+      "\"Try it right here\" on the homepage now runs the exact same voting, calendar, and RSVP components as the real app, instead of a separate look-alike — every feature shows up there automatically from now on.",
+      "The demo's comments now show a threaded reply, and there's a little easter egg hiding in the sample poll.",
+    ],
+  },
+  {
     version: "v0.0.10",
     date: "2026-07-21",
     title: "Read range polls at a glance",

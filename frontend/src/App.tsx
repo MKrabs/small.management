@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import Nav from "@/components/layout/Nav";
 import DotGridBackground from "@/components/DotGridBackground";
@@ -26,6 +26,12 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/changelog" element={<ChangelogPage />} />
+        {/* unmatched routes (e.g. a stray navigate() from the landing-page
+         * demo's cards, which aren't real pages) redirect back to "/" —
+         * rendering LandingPage in place here instead would leave the bad
+         * path in the address bar, so a second click compounds onto it
+         * (/poll/3/poll/3/...); redirecting resets the location each time */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
