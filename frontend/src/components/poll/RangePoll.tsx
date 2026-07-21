@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, RotateCcw } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
-import type { Poll, Slot } from "@/api/types";
+import type { Member, Poll, Slot } from "@/api/types";
+import { borderColor } from "@/components/UserAvatar";
 import Crown from "@/components/Crown";
-import MonthGrid, { datesBetween } from "./MonthGrid";
+import MonthGrid, { datesBetween, type MonthBar } from "./MonthGrid";
 import { cn, parseLocalDate } from "@/lib/utils";
 
 type Props = { poll: Poll; activityId: string; slots: Slot[] };
@@ -56,11 +57,38 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
     return map;
   }, [slots]);
 
-  const myDays = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of myRanges) for (const d of datesBetween(s.date!, s.date_end!)) set.add(d);
-    return set;
-  }, [myRanges]);
+  // spotlight: hovering a member's bar (or their legend entry), one of my
+  // chips, "You" in the legend, or my pill on the calendar shows that
+  // range/member normally and desaturates the other bars
+  const [barHover, setBarHover] = useState<string | null>(null);
+  const [chipHover, setChipHover] = useState<number | null>(null);
+  const [meHover, setMeHover] = useState(false);
+  const pillSlot =
+    !pending && !active && !barHover && !chipHover && !meHover && hover
+      ? myRanges.find((s) => hover >= s.date! && hover <= s.date_end!) ?? null
+      : null;
+  const spot = chipHover
+    ? { slot: myRanges.find((s) => s.id === chipHover) ?? null }
+    : barHover
+      ? { member: barHover }
+      : meHover
+        ? { mine: true as const }
+        : pillSlot
+          ? { slot: pillSlot }
+          : null;
+  const spotRange = spot && "slot" in spot ? spot.slot : null;
+  const spotMine = !!spot && "mine" in spot;
+
+  // clicking a name in the legend hides their bars from the calendar
+  // (stacks — multiple members can be hidden at once); doesn't touch votes
+  const [hiddenMembers, setHiddenMembers] = useState<Set<string>>(new Set());
+  const toggleHidden = (id: string) =>
+    setHiddenMembers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const invalidate = () => {
     setPreview(null);
@@ -137,15 +165,107 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
     if (landedIdx !== -1) setCommitting(null);
   }, [landedIdx]);
 
-  const previewSet = useMemo(() => new Set(preview ?? []), [preview]);
-  // mouse-only ghost of the range the second tap would create
-  const ghostSet = useMemo(
-    () => new Set(pending && hover ? datesBetween(pending, hover) : []),
-    [pending, hover],
-  );
   const busy = createMut.isPending || moveMut.isPending || deleteMut.isPending;
   // crown the leading day(s) — needs a real lead, not everyone's lone vote
   const maxVoters = Math.max(0, ...[...countByDay.values()].map((s) => s.size));
+
+  const myMember = activity?.me ?? null;
+
+  // continuous multi-day bars for MonthGrid's overlay: everyone else's saved
+  // ranges, mine, the live drag preview, and the tap–tap ghost — one
+  // mechanism for all of them instead of a separate per-day fill/lane
+  // system. Lanes are packed by MonthGrid itself, from actual date overlap
+  // — not reserved per member — so this only needs to supply colors.
+  const bars: MonthBar[] = useMemo(() => {
+    const list: MonthBar[] = [];
+    for (const s of slots) {
+      if (!s.date || !s.date_end || s.member.id === myId || hiddenMembers.has(s.member.id)) continue;
+      list.push({
+        key: `slot-${s.id}`,
+        startDate: s.date,
+        endDate: s.date_end,
+        color: memberColor(s.member),
+        dimmed: !!spot && !("member" in spot && spot.member === s.member.id),
+        onPointerEnter: (e) => e.pointerType === "mouse" && setBarHover(s.member.id),
+        onPointerLeave: () => setBarHover(null),
+      });
+    }
+    const meHidden = !!myId && hiddenMembers.has(myId);
+    // while previewing a move for a slot (active + hovering), its normal
+    // bar is replaced by the ghost preview below instead of showing both
+    const previewingSlotId = active && hover ? active.slotId : null;
+    if (!meHidden) {
+      for (const s of myRanges) {
+        if (s.id === previewingSlotId) continue;
+        list.push({
+          key: `mine-${s.id}`,
+          startDate: s.date!,
+          endDate: s.date_end!,
+          // your own real color (avatar/name), same mechanism as everyone
+          // else — a legend row below the calendar spells out who's who
+          color: memberColor(s.member),
+          dimmed: !!spot && !spotMine && !(spotRange && spotRange.id === s.id),
+          // hovering your own bar spotlights it the same way hovering its chip does
+          onPointerEnter: (e) => e.pointerType === "mouse" && setChipHover(s.id),
+          onPointerLeave: () => setChipHover(null),
+        });
+      }
+    }
+    // the live drag preview / tap–tap ghost stay visible even if you've
+    // hidden your own saved votes — it's active feedback, not a saved vote
+    if (myMember && preview && preview.length) {
+      list.push({ key: "preview", startDate: preview[0], endDate: preview[preview.length - 1], color: memberColor(myMember) });
+    }
+    if (myMember && pending && hover) {
+      const [lo, hi] = hover <= pending ? [hover, pending] : [pending, hover];
+      list.push({ key: "ghost", startDate: lo, endDate: hi, color: memberColor(myMember), variant: "ghost" });
+    }
+    // same preview, for moving an endpoint: hovering the calendar while a
+    // date is activated for editing previews where that move would land
+    if (myMember && active && hover) {
+      const slot = myRanges.find((s) => s.id === active.slotId);
+      if (slot) {
+        const other = active.which === "date" ? slot.date_end! : slot.date!;
+        const [lo, hi] = hover <= other ? [hover, other] : [other, hover];
+        list.push({ key: "ghost", startDate: lo, endDate: hi, color: memberColor(myMember), variant: "ghost" });
+      }
+    }
+    return list;
+  }, [slots, myId, myRanges, myMember, preview, pending, hover, active, spot, spotRange, spotMine, hiddenMembers]);
+
+  // color key so bars are actually decodable at a glance, not just "mine vs
+  // everyone else" — dedup by member, mine first
+  const legend = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; color: string; isMe: boolean }>();
+    for (const s of slots) {
+      if (!s.date || !s.date_end || map.has(s.member.id)) continue;
+      map.set(s.member.id, {
+        id: s.member.id,
+        name: s.member.id === myId ? "You" : s.member.display_name,
+        color: memberColor(s.member),
+        isMe: s.member.id === myId,
+      });
+    }
+    return [...map.values()].sort((a, b) => (a.isMe ? -1 : b.isMe ? 1 : a.name.localeCompare(b.name)));
+  }, [slots, myId]);
+
+  // hover/hide state can end up pointing at a member or slot a vote deletion
+  // (yours or, live, someone else's) just removed. The element that would've
+  // cleared it via onMouseLeave is gone before the pointer can actually
+  // leave it, so without this the reference sticks forever: spotlight stays
+  // permanently on (dimming everyone else with nothing to show), and a
+  // hidden member can vanish from the legend while still counting toward
+  // hiddenMembers, leaving the reset icon stuck with nothing left to reset.
+  useEffect(() => {
+    const memberIds = new Set(legend.map((m) => m.id));
+    if (barHover !== null && !memberIds.has(barHover)) setBarHover(null);
+    if (chipHover !== null && !myRanges.some((s) => s.id === chipHover)) setChipHover(null);
+    if (meHover && myRanges.length === 0) setMeHover(false);
+    setHiddenMembers((prev) => {
+      const next = new Set([...prev].filter((id) => memberIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [legend, myRanges, barHover, chipHover, meHover]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -160,48 +280,49 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
             : (days) => !busy && commitRange(days[0], days[days.length - 1])
         }
         onHover={disabled ? undefined : setHover}
+        bars={bars}
         dayCell={(day) => {
-          const mine = myDays.has(day);
-          // the drag preview renders as a unified range pill, same as a saved range
-          const inPreview = previewSet.has(day);
-          const filled = mine || inPreview;
-          const ghost = !filled && ghostSet.has(day);
-          const ghostEnd = ghost && (day === pending || day === hover);
           const voters = countByDay.get(day)?.size ?? 0;
-          const others = voters - (mine ? 1 : 0);
           const top = maxVoters >= 2 && voters === maxVoters;
           return {
-            className: cn(
-              // while selecting: entering/moving the ghost snaps (transitions
-              // apply to the state being entered), leaving it eases out with
-              // bg and corners fading together — corners alone snapping is
-              // what read as stray rounded blobs
-              pending && (ghost ? "transition-none" : "transition-[background-color,border-radius] duration-300"),
-              filled && "bg-primary text-primary-foreground font-medium hover:bg-primary/90",
-              // join the range into a pill: square off sides that continue
-              ((mine && myDays.has(prevDay(day))) || (inPreview && previewSet.has(prevDay(day)))) && "rounded-l-none",
-              ((mine && myDays.has(nextDay(day))) || (inPreview && previewSet.has(nextDay(day)))) && "rounded-r-none",
-              // armed start day: outline, not filled — it isn't a vote yet
-              day === pending && "ring-2 ring-primary ring-inset font-medium",
-              // ghost preview forms the same pill as a saved range: grey between, darker ends
-              ghost && (ghostEnd ? "bg-foreground/20 hover:bg-foreground/25" : "bg-muted"),
-              ghost && ghostSet.has(prevDay(day)) && "rounded-l-none",
-              ghost && ghostSet.has(nextDay(day)) && "rounded-r-none",
-              !filled && !ghost && others > 0 && (others >= 3 ? "bg-primary/25" : "bg-primary/10"),
-            ),
-            content: (
-              <>
-                {top && <Crown className={cn("absolute top-0.5 right-1 h-2.5 w-3.5", filled ? "text-primary-foreground" : "text-amber-500")} />}
-                {voters > 0 && (
-                  <span className={cn("text-[9px] leading-none mt-0.5", filled ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                    {voters}
-                  </span>
-                )}
-              </>
-            ),
+            // armed start day: outline, not filled — it isn't a vote yet
+            className: cn(day === pending && "ring-2 ring-primary ring-inset font-medium"),
+            content: top && <Crown className="absolute top-0.5 right-1 h-2.5 w-3.5 text-amber-500" />,
           };
         }}
       />
+
+      {legend.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {legend.map((m) => {
+            const hidden = hiddenMembers.has(m.id);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                className={cn("flex items-center gap-1 transition-opacity duration-200", hidden && "opacity-40 line-through")}
+                onMouseEnter={() => (m.isMe ? setMeHover(true) : setBarHover(m.id))}
+                onMouseLeave={() => (m.isMe ? setMeHover(false) : setBarHover(null))}
+                onClick={() => toggleHidden(m.id)}
+              >
+                <span className="size-2 rounded-full" style={{ backgroundColor: m.color }} />
+                {m.name}
+              </button>
+            );
+          })}
+          {hiddenMembers.size > 0 && (
+            <button
+              type="button"
+              aria-label="Show everyone"
+              className="text-muted-foreground hover:text-foreground"
+              style={{ animation: "bar-fade-in 200ms ease-out" }}
+              onClick={() => setHiddenMembers(new Set())}
+            >
+              <RotateCcw className="size-3" />
+            </button>
+          )}
+        </div>
+      )}
 
       {active && (
         <p className="text-xs text-primary">Tap a day on the calendar to move this date, or tap the date again to cancel.</p>
@@ -220,7 +341,12 @@ export default function RangePoll({ poll, activityId, slots }: Props) {
     const saved = myRanges
       .filter((_, i) => i !== landedIdx)
       .map((s) => (
-        <span key={s.id} className="flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-1 text-xs">
+        <span
+          key={s.id}
+          className="flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-1 text-xs"
+          onMouseEnter={() => setChipHover(s.id)}
+          onMouseLeave={() => setChipHover(null)}
+        >
           <EndpointButton slot={s} which="date" active={active} onToggle={activateEndpoint} />
           {s.date !== s.date_end && (
             <>
@@ -329,18 +455,13 @@ function RollingText({ text }: { text: string }) {
   );
 }
 
-function prevDay(day: string): string {
-  const d = parseLocalDate(day);
-  d.setDate(d.getDate() - 1);
-  return toStr(d);
-}
-function nextDay(day: string): string {
-  const d = parseLocalDate(day);
-  d.setDate(d.getDate() + 1);
-  return toStr(d);
-}
-function toStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+/** Bar color for a member: their avatar's border color, else the same
+ * name-hash hue UserAvatar's fallback uses, at matching saturation. */
+function memberColor(m: Member): string {
+  if (m.avatar) return borderColor(m.avatar.border);
+  let hue = 0;
+  for (const c of m.display_name) hue = (hue * 31 + c.charCodeAt(0)) % 360;
+  return `hsl(${hue} 45% 60%)`;
 }
 
 function EndpointButton({
