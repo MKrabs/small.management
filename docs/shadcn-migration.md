@@ -29,8 +29,7 @@ Project setup: style `base-nova` on **base-ui** primitives (`render={}` instead 
 
 ## Deliberately not migrating
 
-- **Native `<input type="date">` / `type="time">`** (FinalizeSheet, SlotEditor) — native pickers are already correct on mobile; shadcn's `Calendar` would be strictly worse here.
-- **`Heatmap.tsx`** — bespoke `color-mix()`-based availability heatmap with per-cell member lookup. No shadcn primitive fits.
+- **Native `<input type="date">` / `type="time">`** (CreateEventSheet) — native pickers are already correct on mobile; shadcn's `Calendar` would be strictly worse here.
 - **`MonthGrid` / `DatePoll` / `RangePoll`** — drag-to-vote calendars with per-day group-count tints and range pills; shadcn's `Calendar` is a single/range date *picker*, not a multi-member voting grid.
 - **Feed cards** — interactive composites with custom tap-target layout; `Card` would add wrapper markup for no behavioral gain.
 - **`CommentSection`'s per-branch collapse** — text-link toggles inside a recursive tree; a `Collapsible` per node is heavier for no gain.

@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen, Plus } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useActivity } from "@/hooks/useActivity";
-import type { AvatarConfig, Poll, PollKind, PollOption, Slot } from "@/api/types";
+import type { AvatarConfig, Poll, PollOption, Slot } from "@/api/types";
 import UserAvatar from "@/components/UserAvatar";
 import DetailShell from "@/components/layout/DetailShell";
 import StickyBar from "@/components/layout/StickyBar";
@@ -17,21 +17,17 @@ import {
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import SlotEditor from "@/components/poll/SlotEditor";
-import Heatmap from "@/components/poll/Heatmap";
 import ChoicePoll from "@/components/poll/ChoicePoll";
 import DatePoll from "@/components/poll/DatePoll";
 import RangePoll from "@/components/poll/RangePoll";
 import { Button } from "@/components/ui/button";
-import { STATUS_ICON, STATUS_TEXT } from "@/lib/status";
-import { formatDay, formatTime, timeAgo } from "@/lib/utils";
+import { formatDay, timeAgo } from "@/lib/utils";
 
 export default function PollPage() {
   const { pollId = "" } = useParams();
   const { id, activity } = useActivity();
   const api = useApi();
   const qc = useQueryClient();
-  const [editorOpen, setEditorOpen] = useState(false);
 
   const invalidatePoll = () => {
     qc.invalidateQueries({ queryKey: ["poll", id, pollId] });
@@ -60,11 +56,6 @@ export default function PollPage() {
   });
 
   const slots = useMemo(() => slotsQ.data ?? [], [slotsQ.data]);
-  const myId = activity?.me?.id;
-  const mySlots = useMemo(
-    () => sortSlots(slots.filter((s) => s.member.id === myId)),
-    [slots, myId],
-  );
   const respondedCount = new Set(slots.map((s) => s.member.id)).size;
 
   return (
@@ -129,48 +120,14 @@ export default function PollPage() {
           {kind === "date" && (
             <>
               <DatePoll poll={pollQ.data} activityId={id} slots={slots} />
-              <MemberBreakdown slots={slots} kind={kind} />
+              <MemberBreakdown slots={slots} />
             </>
           )}
 
           {kind === "range" && (
             <>
               <RangePoll poll={pollQ.data} activityId={id} slots={slots} />
-              <MemberBreakdown slots={slots} kind={kind} />
-            </>
-          )}
-
-          {kind === "datetime" && (
-            <>
-              <Heatmap slots={slots} />
-
-              {/* Your availability */}
-              <section className="flex flex-col gap-2">
-                <h2 className="text-sm font-medium">Your availability</h2>
-                {mySlots.length === 0 && (
-                  <p className="text-sm text-muted-foreground">You haven't shared anything yet.</p>
-                )}
-                {mySlots.length > 0 && (
-                  <button
-                    className="flex flex-col gap-1.5 text-left border rounded-lg p-3 hover:bg-muted/50 transition-colors"
-                    disabled={!!pollQ.data.locked_at}
-                    onClick={() => setEditorOpen(true)}
-                  >
-                    {mySlots.map((s) => (
-                      <SlotRow key={s.id} slot={s} />
-                    ))}
-                  </button>
-                )}
-                {!pollQ.data.locked_at && (
-                  <Button variant="outline" size="sm" className="self-start" onClick={() => setEditorOpen(true)}>
-                    <Plus data-icon="inline-start" />
-                    {mySlots.length > 0 ? "Edit availability" : "Share availability"}
-                  </Button>
-                )}
-              </section>
-
-              {/* Per-member breakdown */}
-              <MemberBreakdown slots={slots} kind={kind} />
+              <MemberBreakdown slots={slots} />
             </>
           )}
 
@@ -193,41 +150,20 @@ export default function PollPage() {
           )}
         </StickyBar>
       )}
-
-      {editorOpen && (
-        <SlotEditor
-          activityId={id}
-          pollId={pollId}
-          mySlots={mySlots}
-          onClose={() => setEditorOpen(false)}
-        />
-      )}
     </DetailShell>
   );
 }
 
 function sortSlots(slots: Slot[]): Slot[] {
-  return [...slots].sort((a, b) =>
-    `${a.date ?? ""}${a.time_start ?? ""}`.localeCompare(`${b.date ?? ""}${b.time_start ?? ""}`),
-  );
+  return [...slots].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
 }
 
-function SlotRow({ slot, showStatus = true }: { slot: Slot; showStatus?: boolean }) {
+function SlotRow({ slot }: { slot: Slot }) {
   return (
     <span className="flex items-baseline gap-2 text-sm">
-      {showStatus && (
-        <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[slot.status]}`}>
-          {STATUS_ICON[slot.status]}
-        </span>
-      )}
       <span>
         {slot.date ? formatDay(slot.date) : <span className="italic">general {slot.status}</span>}
         {slot.date_end && slot.date_end !== slot.date && <> – {formatDay(slot.date_end)}</>}
-        {slot.time_start && slot.time_end && (
-          <span className="text-muted-foreground">
-            {" "}· {formatTime(slot.time_start)}–{formatTime(slot.time_end)}
-          </span>
-        )}
       </span>
       {slot.note && <span className="text-muted-foreground truncate">“{slot.note}”</span>}
     </span>
@@ -263,10 +199,8 @@ function ChoiceBreakdown({ options }: { options: PollOption[] }) {
   );
 }
 
-function MemberBreakdown({ slots, kind }: { slots: Slot[]; kind: PollKind }) {
+function MemberBreakdown({ slots }: { slots: Slot[] }) {
   const [mode, setMode] = useState<"selection" | "person">("selection");
-  // date/range polls only take "yes" votes, so a ✓ says nothing — the avatar identifies the voter
-  const showStatus = kind === "datetime";
 
   const byMember = useMemo(() => {
     const map = new Map<string, { name: string; avatar: AvatarConfig | null; slots: Slot[] }>();
@@ -323,7 +257,7 @@ function MemberBreakdown({ slots, kind }: { slots: Slot[]; kind: PollKind }) {
                 {m.name}
               </p>
               {m.slots.map((s) => (
-                <SlotRow key={s.id} slot={s} showStatus={showStatus} />
+                <SlotRow key={s.id} slot={s} />
               ))}
             </div>
           ))}
@@ -335,19 +269,7 @@ function MemberBreakdown({ slots, kind }: { slots: Slot[]; kind: PollKind }) {
               {g.slots.map((s) => (
                 <span key={s.id} className="flex items-center gap-2 text-sm">
                   <UserAvatar name={s.member.display_name} avatar={s.member.avatar} className="size-5" textClassName="text-[10px]" />
-                  {showStatus && (
-                    <span className={`font-semibold w-3 text-center shrink-0 ${STATUS_TEXT[s.status]}`}>
-                      {STATUS_ICON[s.status]}
-                    </span>
-                  )}
-                  <span>
-                    {s.member.display_name}
-                    {s.time_start && s.time_end && (
-                      <span className="text-muted-foreground">
-                        {" "}· {formatTime(s.time_start)}–{formatTime(s.time_end)}
-                      </span>
-                    )}
-                  </span>
+                  <span>{s.member.display_name}</span>
                   {s.note && <span className="text-muted-foreground truncate">“{s.note}”</span>}
                 </span>
               ))}

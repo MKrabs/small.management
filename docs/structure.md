@@ -9,7 +9,7 @@ description: Entity hierarchy (Activity → Poll/Event) and the planning loop.
 
 ```
 Activity  ("Karaoke night at my place")
-├── Poll(s)       → typed decisions: choice / date / date+time / date range
+├── Poll(s)       → typed decisions: choice / date / date range
 │   ├── Options + votes   (choice polls)
 │   └── Slots             (date-based polls)
 ├── Event         → fixed date+time, RSVP, iCal
@@ -27,12 +27,11 @@ An Activity is the top-level container. Everything else lives inside it. Multipl
 | `choice` | "Pizza or sushi?" | Pick one (or several if allowed) of the options; anyone can add options |
 | `date` | "Which day?" | Tap/drag days on a calendar — each day is a binary vote |
 | `range` | "Which week works?" | Drag from–to on a calendar — each vote is a date range |
-| `datetime` | "When exactly?" | Day + time slots with yes/maybe/no (the classic availability poll) |
 
 ## The Planning Loop
 
 1. A member creates a **Poll** of whatever kind fits the question
-2. Members vote — right on the feed card for choice/date/range polls, on the dedicated page for date+time
+2. Members vote — right on the feed card, for any poll kind
 3. Any member **finishes voting** — the poll locks (reversibly) with the winning choice(s) crowned
 4. After the event, any member can start a **New Cycle** — same activity, fresh planning round
 
@@ -40,7 +39,7 @@ Proposals were removed. Events and RSVPs still exist for previously finalized po
 
 ## Feed Cards
 
-The activity feed shows interactive decision cards: vote and add options without leaving the feed, see the latest 3 top-level comments, tap through for full results and the threaded comment tree. Date+time polls are summary cards only — their editor lives on the dedicated page.
+The activity feed shows interactive decision cards: vote and add options without leaving the feed, see the latest 3 top-level comments, tap through for full results and the threaded comment tree.
 
 ## Cycles
 

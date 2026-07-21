@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Calendar, CalendarClock, CalendarRange, ListChecks, Plus, X } from "lucide-react";
+import { Calendar, CalendarRange, ListChecks, Plus, X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,6 @@ const KINDS: { kind: PollKind; icon: React.ReactNode; label: string; hint: strin
   { kind: "choice", icon: <ListChecks className="size-5" />, label: "Options", hint: "Vote on choices" },
   { kind: "date", icon: <Calendar className="size-5" />, label: "Day", hint: "Pick days that work" },
   { kind: "range", icon: <CalendarRange className="size-5" />, label: "Date range", hint: "Pick from–to spans" },
-  { kind: "datetime", icon: <CalendarClock className="size-5" />, label: "Day & time", hint: "Full availability" },
 ];
 
 export default function CreatePollSheet({ activityId, onClose, onCreated }: Props) {

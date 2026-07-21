@@ -5,14 +5,13 @@ from apps.choices import VoteStatus
 class PollKind(models.TextChoices):
     CHOICE = "choice"       # options + votes
     DATE = "date"           # binary day votes
-    DATETIME = "datetime"   # tri-state day + time slots
     RANGE = "range"         # binary from–to day votes
 
 
 class Poll(models.Model):
     activity = models.ForeignKey("activities.Activity", on_delete=models.CASCADE, related_name="polls")
     cycle = models.ForeignKey("activities.Cycle", on_delete=models.SET_NULL, null=True, blank=True, related_name="polls")
-    kind = models.CharField(max_length=8, choices=PollKind.choices, default=PollKind.DATETIME)
+    kind = models.CharField(max_length=8, choices=PollKind.choices, default=PollKind.CHOICE)
     allow_multiple = models.BooleanField(default=False)  # choice polls only
     title = models.CharField(max_length=200)
     created_by = models.ForeignKey("activities.Member", on_delete=models.SET_NULL, null=True)

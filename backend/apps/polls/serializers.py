@@ -40,7 +40,6 @@ class OptionSerializer(serializers.ModelSerializer):
 class PollSerializer(LatestCommentsMixin, serializers.ModelSerializer):
     created_by = MemberSerializer(read_only=True)
     voter_count = serializers.SerializerMethodField()
-    my_vote = serializers.SerializerMethodField()
     options = serializers.SerializerMethodField()
     slots = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
@@ -55,18 +54,6 @@ class PollSerializer(LatestCommentsMixin, serializers.ModelSerializer):
                 member_ids.update(v.member_id for v in opt.votes.all())
             return len(member_ids)
         return obj.slots.filter(deleted_at__isnull=True).values("member_id").distinct().count()
-
-    # summary of the requesting member's own slots (needs "member" in context, e.g. the feed)
-    def get_my_vote(self, obj):
-        member = self.context.get("member")
-        if not member or obj.kind == PollKind.CHOICE:
-            return None
-        slots = obj.slots.filter(deleted_at__isnull=True, member=member)
-        return {
-            "voted": slots.exists(),
-            "has_date": slots.filter(date__isnull=False).exists(),
-            "has_time": slots.filter(time_start__isnull=False).exists(),
-        }
 
     def get_options(self, obj):
         if obj.kind != PollKind.CHOICE:
@@ -85,6 +72,6 @@ class PollSerializer(LatestCommentsMixin, serializers.ModelSerializer):
         model = Poll
         fields = [
             "id", "cycle_id", "kind", "allow_multiple", "title", "created_by",
-            "voter_count", "my_vote", "options", "slots",
+            "voter_count", "options", "slots",
             "comment_count", "latest_comments", "created_at", "deleted_at", "locked_at",
         ]

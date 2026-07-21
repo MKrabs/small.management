@@ -36,7 +36,6 @@ Dedicated page for one decision. Reached by tapping its feed card. Shows the ful
 - **Choice** — same interactive UI as the feed card: two big buttons (2 options) or bar rows (3+), voter avatars, add-option.
 - **Date** — drag/tap calendar (same as the card), plus per-member breakdown below.
 - **Range** — drag calendar with own-range pills and endpoint moving (same as the card), plus breakdown.
-- **Date+time** — group heatmap, "Your availability" slot list, and the slot editor. This kind has no feed-card voting; the page is the only place to vote.
 
 ## Per-member Breakdown
 

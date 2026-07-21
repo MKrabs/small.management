@@ -30,7 +30,7 @@ class PollListCreateView(ActivityMixin, APIView):
         title = (request.data.get("title") or "").strip()
         if not title:
             return Response({"title": ["This field is required"]}, status=400)
-        kind = request.data.get("kind", PollKind.DATETIME)
+        kind = request.data.get("kind", PollKind.CHOICE)
         if kind not in PollKind.values:
             return Response({"kind": [f"Must be one of {', '.join(PollKind.values)}"]}, status=400)
         option_labels = [str(o).strip() for o in request.data.get("options") or [] if str(o).strip()]
@@ -208,8 +208,6 @@ def _validate_slot(poll, data):
             return {"date_end": ["This field is required"]}
         if str(data["date_end"]) < str(data["date"]):
             return {"date_end": ["Must not be before date"]}
-    elif data.get("date_end"):
-        return {"detail": "Only range polls take date_end"}
     return None
 
 
@@ -226,10 +224,8 @@ class SlotListCreateView(ActivityMixin, APIView):
         poll = get_object_or_404(Poll, id=poll_id, activity=activity)
         if err := _locked(poll):
             return err
-        # binary kinds are always "yes"; datetime keeps the tri-state
-        status_val = "yes" if poll.kind in (PollKind.DATE, PollKind.RANGE) else request.data.get("status")
-        if status_val not in ("yes", "maybe", "no"):
-            return Response({"status": ["Must be yes, maybe, or no"]}, status=400)
+        # date/range slots are always "yes" votes — choice polls never reach here (rejected below)
+        status_val = "yes"
         error = _validate_slot(poll, request.data)
         if error:
             return Response(error, status=400)
