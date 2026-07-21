@@ -93,7 +93,7 @@ export default function ActivityPage() {
             <MenuAction
               icon={<BarChart3 className="size-5" />}
               title="New poll"
-              hint="Vote on options, days, or times"
+              hint="Vote on options, days, or date ranges"
               onClick={() => setSheet("poll")}
             />
             <MenuAction
