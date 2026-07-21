@@ -23,7 +23,7 @@ class AvatarSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "display_name", "avatar", "created_at"]
+        fields = ["id", "display_name", "avatar", "seen_changelog_version", "created_at"]
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -41,6 +41,7 @@ class MeUpdateSerializer(serializers.Serializer):
     password = serializers.CharField(min_length=6, required=False)
     current_password = serializers.CharField(required=False)
     avatar = AvatarSerializer(required=False, allow_null=True)
+    seen_changelog_version = serializers.CharField(max_length=20, required=False)
 
     def validate(self, data):
         if "password" in data and not data.get("current_password"):

@@ -10,6 +10,7 @@ import {
 import ProfileDialog from "@/components/ProfileDialog";
 import { useAuth } from "@/contexts/auth";
 import { useApi } from "@/hooks/useApi";
+import { LATEST_VERSION } from "@/changelog";
 
 export default function Nav() {
   const { user, logout } = useAuth();
@@ -43,6 +44,13 @@ export default function Nav() {
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => setProfileOpen(true)}>
                   Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/changelog")}>
+                  Changelog
+                  {user.seen_changelog_version !== LATEST_VERSION && (
+                    // same yellow as .marker-highlight
+                    <span className="ml-auto size-1.5 rounded-full bg-[#FCD34D]" />
+                  )}
                 </DropdownMenuItem>
                 <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                   Log out

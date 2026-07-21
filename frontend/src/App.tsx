@@ -9,6 +9,7 @@ import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import PollPage from "@/pages/PollPage";
 import EventPage from "@/pages/EventPage";
+import ChangelogPage from "@/pages/ChangelogPage";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/activity/:id/:slug/event/:eventId" element={<EventPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/changelog" element={<ChangelogPage />} />
       </Routes>
     </BrowserRouter>
   );

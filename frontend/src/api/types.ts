@@ -19,6 +19,7 @@ export type User = {
   id: string;
   display_name: string;
   avatar: AvatarConfig | null;
+  seen_changelog_version: string;
   created_at: string;
 };
 
