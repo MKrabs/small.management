@@ -12,6 +12,7 @@ import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, User } from "@/api/types";
 import UserAvatar, { nameColor } from "@/components/UserAvatar";
+import { CHANGELOG } from "@/changelog";
 import { buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
@@ -199,6 +200,35 @@ function MarketingHome() {
           the club picking a tournament weekend, the family sorting out the
           holidays.
         </p>
+      </section>
+
+      {/* What's new — latest release only; the full history lives at /changelog */}
+      <section className="py-10 flex flex-col gap-4 border-t">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            What's new
+          </p>
+          <h2 className="text-xl font-semibold mt-1">{CHANGELOG[0].title}</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {CHANGELOG[0].version} ·{" "}
+            {new Date(CHANGELOG[0].date).toLocaleDateString(undefined, {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+        <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground leading-relaxed list-disc pl-5">
+          {CHANGELOG[0].items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+        <Link
+          to="/changelog"
+          className="text-sm underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors self-start"
+        >
+          See all changes
+        </Link>
       </section>
 
       {/* Principles */}

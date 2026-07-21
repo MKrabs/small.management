@@ -76,6 +76,11 @@ class MeUpdateTests(TestCase):
             res = self.client.patch("/api/auth/me/", {"avatar": bad}, format="json")
             self.assertEqual(res.status_code, 400, bad)
 
+    def test_seen_changelog_version_roundtrip(self):
+        res = self.client.patch("/api/auth/me/", {"seen_changelog_version": "v0.0.9"}, format="json")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["seen_changelog_version"], "v0.0.9")
+
     def test_delete_requires_correct_password(self):
         res = self.client.delete("/api/auth/me/", {}, format="json")
         self.assertEqual(res.status_code, 400)

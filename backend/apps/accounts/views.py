@@ -69,6 +69,8 @@ class MeView(APIView):
             user.tokens.exclude(pk=request.auth.pk).delete()
         if "avatar" in s.validated_data:
             user.avatar = s.validated_data["avatar"]
+        if "seen_changelog_version" in s.validated_data:
+            user.seen_changelog_version = s.validated_data["seen_changelog_version"]
         user.save()
         return Response(UserSerializer(user).data)
 
