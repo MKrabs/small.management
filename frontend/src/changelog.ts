@@ -11,6 +11,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "v0.0.10",
+    date: "2026-07-21",
+    title: "Read range polls at a glance",
+    items: [
+      "Vote on date ranges by tapping a start day and an end day — dragging still works too, for two days or more.",
+      "Overlapping votes now show as continuous bars, like a shared calendar, with a color key so it's clear who's who.",
+      "Hide anyone's bars from the view by clicking their name in the key — click again, or the reset icon, to bring them back.",
+      "Click one of your dates to move it, with a live preview on the calendar before you commit.",
+    ],
+  },
+  {
     version: "v0.0.9",
     date: "2026-07-21",
     title: "See what's new",

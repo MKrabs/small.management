@@ -157,6 +157,20 @@
   to   { transform: scaleX(1); }
 }
 
+/* range chip: changed characters roll in from below, odometer-style */
+@keyframes digit-roll {
+  from { transform: translateY(0.7em); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* range-poll calendar bar: fades in on mount (new vote, or a member
+ * un-hidden) — transitions alone don't animate an element's first
+ * appearance, so this covers what transition-opacity can't. */
+@keyframes bar-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 
 /* Motion here is decorative only — honor the OS-level opt-out. */
 @media (prefers-reduced-motion: reduce) {
