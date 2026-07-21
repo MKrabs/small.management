@@ -57,7 +57,7 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
         autoFocus
       />
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 [&>button:last-child:nth-child(odd)]:col-span-2">
         {KINDS.map((k) => (
           <button
             key={k.kind}

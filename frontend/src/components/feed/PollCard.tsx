@@ -22,7 +22,7 @@ export default function PollCard({ poll, activityId, memberCount }: Props) {
 
   return (
     <FeedCard
-      type={KIND_LABEL[poll.kind]}
+      type={KIND_LABEL[poll.kind] ?? "Poll"}
       suffix={!deleted && poll.locked_at ? "voting finished" : undefined}
       votes={`${poll.voter_count}${memberCount ? ` of ${memberCount}` : ""} voted`}
       by={{ name: poll.created_by?.display_name, at: poll.created_at }}
