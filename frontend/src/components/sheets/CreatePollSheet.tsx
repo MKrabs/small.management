@@ -7,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/ui/field";
-import BottomSheet from "@/components/layout/BottomSheet";
 import { cn } from "@/lib/utils";
 import type { Poll, PollKind } from "@/api/types";
 
 type Props = {
   activityId: string;
-  onClose: () => void;
   onBack?: () => void;
   onCreated: (poll: Poll) => void;
 };
@@ -24,7 +22,7 @@ const KINDS: { kind: PollKind; icon: React.ReactNode; label: string; hint: strin
   { kind: "range", icon: <CalendarRange className="size-5" />, label: "Date range", hint: "Pick from–to spans" },
 ];
 
-export default function CreatePollSheet({ activityId, onClose, onBack, onCreated }: Props) {
+export default function CreatePollSheet({ activityId, onBack, onCreated }: Props) {
   const api = useApi();
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<PollKind>("choice");
@@ -49,7 +47,7 @@ export default function CreatePollSheet({ activityId, onClose, onBack, onCreated
   });
 
   return (
-    <BottomSheet onClose={onClose} title="New poll">
+    <div className="flex flex-col gap-4">
       <Input
         placeholder='What are we deciding? e.g. "Pizza or sushi?"'
         value={title}
@@ -126,6 +124,6 @@ export default function CreatePollSheet({ activityId, onClose, onBack, onCreated
           {mutation.isPending ? "Creating…" : "Create poll"}
         </Button>
       </div>
-    </BottomSheet>
+    </div>
   );
 }

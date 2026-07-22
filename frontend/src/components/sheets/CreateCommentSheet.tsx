@@ -5,18 +5,16 @@ import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError } from "@/components/ui/field";
-import BottomSheet from "@/components/layout/BottomSheet";
 import type { Comment } from "@/api/types";
 
 type Props = {
   activityId: string;
-  onClose: () => void;
   onBack?: () => void;
   onCreated: () => void;
 };
 
 /** Standalone thread in the activity feed (not attached to a card). */
-export default function CreateCommentSheet({ activityId, onClose, onBack, onCreated }: Props) {
+export default function CreateCommentSheet({ activityId, onBack, onCreated }: Props) {
   const api = useApi();
   const [body, setBody] = useState("");
 
@@ -27,7 +25,7 @@ export default function CreateCommentSheet({ activityId, onClose, onBack, onCrea
   });
 
   return (
-    <BottomSheet onClose={onClose} title="New thread">
+    <div className="flex flex-col gap-4">
       <Textarea
         className="min-h-24 resize-none"
         placeholder="Say something to the group…"
@@ -47,6 +45,6 @@ export default function CreateCommentSheet({ activityId, onClose, onBack, onCrea
           {mutation.isPending ? "Posting…" : "Post"}
         </Button>
       </div>
-    </BottomSheet>
+    </div>
   );
 }

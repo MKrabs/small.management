@@ -5,17 +5,14 @@ import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import BottomSheet from "@/components/layout/BottomSheet";
 
 /** Post an event straight to the feed — no poll needed. */
 export default function CreateEventSheet({
   activityId,
-  onClose,
   onBack,
   onCreated,
 }: {
   activityId: string;
-  onClose: () => void;
   onBack?: () => void;
   onCreated: () => void;
 }) {
@@ -40,7 +37,7 @@ export default function CreateEventSheet({
   });
 
   return (
-    <BottomSheet onClose={onClose} title="Post an event">
+    <div className="flex flex-col gap-4">
       <Field>
         <FieldLabel htmlFor="event-date">Date</FieldLabel>
         <Input id="event-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} autoFocus />
@@ -68,6 +65,6 @@ export default function CreateEventSheet({
           {mutation.isPending ? "Posting…" : "Post event"}
         </Button>
       </div>
-    </BottomSheet>
+    </div>
   );
 }

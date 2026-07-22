@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, CalendarPlus, MessageSquare, RefreshCw } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/auth";
 import type { Activity, FeedItem, Member } from "@/api/types";
@@ -9,22 +8,16 @@ import PageShell from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 import ActivityFeed from "@/components/feed/ActivityFeed";
 import ActivityHeader from "@/components/layout/ActivityHeader";
-import BottomSheet from "@/components/layout/BottomSheet";
-import CreatePollSheet from "@/components/sheets/CreatePollSheet";
-import CreateCommentSheet from "@/components/sheets/CreateCommentSheet";
-import NewCycleSheet from "@/components/sheets/NewCycleSheet";
-import CreateEventSheet from "@/components/sheets/CreateEventSheet";
+import AddToActivitySheet from "@/components/sheets/AddToActivitySheet";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
-
-type SheetKind = "menu" | "poll" | "comment" | "cycle" | "event" | null;
 
 export default function ActivityPage() {
   const { id = "", slug = "" } = useParams();
   const api = useApi();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [sheet, setSheet] = useState<SheetKind>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
@@ -80,110 +73,30 @@ export default function ActivityPage() {
           <Button
             size="lg"
             className="pointer-events-auto rounded-full shadow-lg h-14 w-14 text-2xl p-0"
-            onClick={() => setSheet("menu")}
+            onClick={() => setSheetOpen(true)}
           >
             +
           </Button>
         </div>
       </div>
 
-      {sheet === "menu" && (
-        <BottomSheet onClose={() => setSheet(null)} title="Add to activity" bare>
-          <div className="@container">
-            <div className="flex flex-col gap-1 @lg:grid @lg:grid-cols-2 @lg:gap-3">
-              <MenuAction
-                icon={<BarChart3 className="size-5 @lg:size-8" />}
-                title="New poll"
-                hint="Vote on options, days, or date ranges"
-                onClick={() => setSheet("poll")}
-              />
-              <MenuAction
-                icon={<CalendarPlus className="size-5 @lg:size-8" />}
-                title="Post an event"
-                hint="A fixed date, no vote needed"
-                onClick={() => setSheet("event")}
-              />
-              <MenuAction
-                icon={<MessageSquare className="size-5 @lg:size-8" />}
-                title="New thread"
-                hint="Say something to the group"
-                onClick={() => setSheet("comment")}
-              />
-              <MenuAction
-                icon={<RefreshCw className="size-5 @lg:size-8" />}
-                title="Start new cycle"
-                hint="Fold this round away and plan the next one"
-                onClick={() => setSheet("cycle")}
-              />
-            </div>
-          </div>
-        </BottomSheet>
-      )}
-
-      {sheet === "poll" && (
-        <CreatePollSheet
+      {sheetOpen && (
+        <AddToActivitySheet
           activityId={id}
-          onClose={() => setSheet(null)}
-          onBack={() => setSheet("menu")}
-          onCreated={(p) => {
+          onClose={() => setSheetOpen(false)}
+          onPollCreated={(p) => {
             qc.invalidateQueries({ queryKey: ["feed", id] });
             navigate(`/activity/${id}/${slug}/poll/${p.id}`);
           }}
-        />
-      )}
-      {sheet === "event" && (
-        <CreateEventSheet
-          activityId={id}
-          onClose={() => setSheet(null)}
-          onBack={() => setSheet("menu")}
-          onCreated={() => setSheet(null)}
-        />
-      )}
-      {sheet === "comment" && (
-        <CreateCommentSheet
-          activityId={id}
-          onClose={() => setSheet(null)}
-          onBack={() => setSheet("menu")}
-          onCreated={() => {
-            setSheet(null);
+          onEventCreated={() => setSheetOpen(false)}
+          onCommentCreated={() => {
+            setSheetOpen(false);
             qc.invalidateQueries({ queryKey: ["feed", id] });
           }}
-        />
-      )}
-      {sheet === "cycle" && (
-        <NewCycleSheet
-          activityId={id}
-          onClose={() => setSheet(null)}
-          onBack={() => setSheet("menu")}
-          onCreated={() => setSheet(null)}
+          onCycleCreated={() => setSheetOpen(false)}
         />
       )}
     </div>
-  );
-}
-
-function MenuAction({
-  icon,
-  title,
-  hint,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  hint: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-4 rounded-lg px-3 py-3 text-left hover:bg-muted transition-colors @lg:flex-col @lg:justify-center @lg:gap-2 @lg:border @lg:px-4 @lg:py-6 @lg:text-center"
-    >
-      <span className="text-muted-foreground">{icon}</span>
-      <span>
-        <span className="block text-sm font-medium">{title}</span>
-        <span className="block text-xs text-muted-foreground">{hint}</span>
-      </span>
-    </button>
   );
 }
 
