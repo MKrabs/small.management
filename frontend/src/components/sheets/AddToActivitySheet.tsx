@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { BarChart3, CalendarPlus, MessageSquare, RefreshCw } from "lucide-react";
 import BottomSheet from "@/components/layout/BottomSheet";
 import CreatePollSheet from "./CreatePollSheet";
@@ -51,19 +51,53 @@ export default function AddToActivitySheet({
   }
   const goMenu = () => go("menu");
 
+  // CSS can't transition a plain height:auto — the resolved size changes but
+  // the specified value never does, so nothing tells the transition to run
+  // (true even with interpolate-size, which only covers keyword<->length
+  // toggles, not content silently resizing under an unchanged auto). This is
+  // the minimal alternative: track the content's real height and transition
+  // between two definite pixel values instead.
+  //
+  // A callback ref (not a plain ref read in an effect) because BottomSheet's
+  // own open animation mounts the Drawer's content asynchronously — a
+  // one-shot effect keyed on `page` can run before that content exists,
+  // see the ref as null, and never get another chance to measure. A
+  // ResizeObserver set up from the callback ref fires as soon as the node is
+  // actually there, and again on every later resize (page switches, content
+  // changes within a page).
+  const [height, setHeight] = useState<number>();
+  const resizeObserver = useRef<ResizeObserver | null>(null);
+  function setContentRef(el: HTMLDivElement | null) {
+    resizeObserver.current?.disconnect();
+    resizeObserver.current = null;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      const target = el.offsetHeight;
+      // defer one frame so the browser paints the "before" height first —
+      // otherwise this can land in the same commit as the size change and
+      // there's nothing prior on screen for the transition to run from.
+      requestAnimationFrame(() => setHeight(target));
+    });
+    ro.observe(el);
+    resizeObserver.current = ro;
+  }
+
   return (
     <BottomSheet onClose={onClose} title={TITLES[page]} bare={page === "menu"}>
-      <div
-        className="transition-opacity ease-in-out"
-        style={{ opacity: visible ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
-      >
-        {page === "menu" && <MenuPanel onSelect={go} />}
-        {page === "poll" && <CreatePollSheet activityId={activityId} onBack={goMenu} onCreated={onPollCreated} />}
-        {page === "event" && <CreateEventSheet activityId={activityId} onBack={goMenu} onCreated={onEventCreated} />}
-        {page === "comment" && (
-          <CreateCommentSheet activityId={activityId} onBack={goMenu} onCreated={onCommentCreated} />
-        )}
-        {page === "cycle" && <NewCycleSheet activityId={activityId} onBack={goMenu} onCreated={onCycleCreated} />}
+      <div className="overflow-hidden transition-[height] ease-in-out" style={{ height, transitionDuration: `${FADE_MS}ms` }}>
+        <div
+          ref={setContentRef}
+          className="transition-opacity ease-in-out"
+          style={{ opacity: visible ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
+        >
+          {page === "menu" && <MenuPanel onSelect={go} />}
+          {page === "poll" && <CreatePollSheet activityId={activityId} onBack={goMenu} onCreated={onPollCreated} />}
+          {page === "event" && <CreateEventSheet activityId={activityId} onBack={goMenu} onCreated={onEventCreated} />}
+          {page === "comment" && (
+            <CreateCommentSheet activityId={activityId} onBack={goMenu} onCreated={onCommentCreated} />
+          )}
+          {page === "cycle" && <NewCycleSheet activityId={activityId} onBack={goMenu} onCreated={onCycleCreated} />}
+        </div>
       </div>
     </BottomSheet>
   );
