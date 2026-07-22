@@ -88,32 +88,34 @@ export default function ActivityPage() {
       </div>
 
       {sheet === "menu" && (
-        <BottomSheet onClose={() => setSheet(null)} title="Add to activity">
-          <div className="flex flex-col gap-1">
-            <MenuAction
-              icon={<BarChart3 className="size-5" />}
-              title="New poll"
-              hint="Vote on options, days, or date ranges"
-              onClick={() => setSheet("poll")}
-            />
-            <MenuAction
-              icon={<CalendarPlus className="size-5" />}
-              title="Post an event"
-              hint="A fixed date, no vote needed"
-              onClick={() => setSheet("event")}
-            />
-            <MenuAction
-              icon={<MessageSquare className="size-5" />}
-              title="New thread"
-              hint="Say something to the group"
-              onClick={() => setSheet("comment")}
-            />
-            <MenuAction
-              icon={<RefreshCw className="size-5" />}
-              title="Start new cycle"
-              hint="Fold this round away and plan the next one"
-              onClick={() => setSheet("cycle")}
-            />
+        <BottomSheet onClose={() => setSheet(null)} title="Add to activity" bare>
+          <div className="@container">
+            <div className="flex flex-col gap-1 @lg:grid @lg:grid-cols-2 @lg:gap-3">
+              <MenuAction
+                icon={<BarChart3 className="size-5 @lg:size-8" />}
+                title="New poll"
+                hint="Vote on options, days, or date ranges"
+                onClick={() => setSheet("poll")}
+              />
+              <MenuAction
+                icon={<CalendarPlus className="size-5 @lg:size-8" />}
+                title="Post an event"
+                hint="A fixed date, no vote needed"
+                onClick={() => setSheet("event")}
+              />
+              <MenuAction
+                icon={<MessageSquare className="size-5 @lg:size-8" />}
+                title="New thread"
+                hint="Say something to the group"
+                onClick={() => setSheet("comment")}
+              />
+              <MenuAction
+                icon={<RefreshCw className="size-5 @lg:size-8" />}
+                title="Start new cycle"
+                hint="Fold this round away and plan the next one"
+                onClick={() => setSheet("cycle")}
+              />
+            </div>
           </div>
         </BottomSheet>
       )}
@@ -122,6 +124,7 @@ export default function ActivityPage() {
         <CreatePollSheet
           activityId={id}
           onClose={() => setSheet(null)}
+          onBack={() => setSheet("menu")}
           onCreated={(p) => {
             qc.invalidateQueries({ queryKey: ["feed", id] });
             navigate(`/activity/${id}/${slug}/poll/${p.id}`);
@@ -132,6 +135,7 @@ export default function ActivityPage() {
         <CreateEventSheet
           activityId={id}
           onClose={() => setSheet(null)}
+          onBack={() => setSheet("menu")}
           onCreated={() => setSheet(null)}
         />
       )}
@@ -139,6 +143,7 @@ export default function ActivityPage() {
         <CreateCommentSheet
           activityId={id}
           onClose={() => setSheet(null)}
+          onBack={() => setSheet("menu")}
           onCreated={() => {
             setSheet(null);
             qc.invalidateQueries({ queryKey: ["feed", id] });
@@ -149,6 +154,7 @@ export default function ActivityPage() {
         <NewCycleSheet
           activityId={id}
           onClose={() => setSheet(null)}
+          onBack={() => setSheet("menu")}
           onCreated={() => setSheet(null)}
         />
       )}
@@ -170,7 +176,7 @@ function MenuAction({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-4 rounded-lg px-3 py-3 text-left hover:bg-muted transition-colors"
+      className="flex items-center gap-4 rounded-lg px-3 py-3 text-left hover:bg-muted transition-colors @lg:flex-col @lg:justify-center @lg:gap-2 @lg:border @lg:px-4 @lg:py-6 @lg:text-center"
     >
       <span className="text-muted-foreground">{icon}</span>
       <span>

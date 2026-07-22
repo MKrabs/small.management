@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +11,12 @@ import BottomSheet from "@/components/layout/BottomSheet";
 export default function CreateEventSheet({
   activityId,
   onClose,
+  onBack,
   onCreated,
 }: {
   activityId: string;
   onClose: () => void;
+  onBack?: () => void;
   onCreated: () => void;
 }) {
   const api = useApi();
@@ -38,7 +41,6 @@ export default function CreateEventSheet({
 
   return (
     <BottomSheet onClose={onClose} title="Post an event">
-      <h2 className="font-semibold text-lg">Post an event</h2>
       <Field>
         <FieldLabel htmlFor="event-date">Date</FieldLabel>
         <Input id="event-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} autoFocus />
@@ -55,8 +57,13 @@ export default function CreateEventSheet({
       </div>
       <Input placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
       {mutation.isError && <FieldError>Something went wrong.</FieldError>}
-      <div className="flex gap-2 justify-end">
-        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+      <div className="flex gap-2 justify-between">
+        {onBack && (
+          <Button variant="ghost" onClick={onBack} className="gap-1">
+            <ArrowLeft className="size-4" />
+            Back
+          </Button>
+        )}
         <Button onClick={() => mutation.mutate()} disabled={!date || mutation.isPending}>
           {mutation.isPending ? "Posting…" : "Post event"}
         </Button>

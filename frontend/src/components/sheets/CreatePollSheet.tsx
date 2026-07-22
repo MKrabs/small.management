@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Calendar, CalendarRange, ListChecks, Plus, X } from "lucide-react";
+import { ArrowLeft, Calendar, CalendarRange, ListChecks, Plus, X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import type { Poll, PollKind } from "@/api/types";
 type Props = {
   activityId: string;
   onClose: () => void;
+  onBack?: () => void;
   onCreated: (poll: Poll) => void;
 };
 
@@ -23,7 +24,7 @@ const KINDS: { kind: PollKind; icon: React.ReactNode; label: string; hint: strin
   { kind: "range", icon: <CalendarRange className="size-5" />, label: "Date range", hint: "Pick from–to spans" },
 ];
 
-export default function CreatePollSheet({ activityId, onClose, onCreated }: Props) {
+export default function CreatePollSheet({ activityId, onClose, onBack, onCreated }: Props) {
   const api = useApi();
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<PollKind>("choice");
@@ -49,7 +50,6 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
 
   return (
     <BottomSheet onClose={onClose} title="New poll">
-      <h2 className="font-semibold text-lg">New poll</h2>
       <Input
         placeholder='What are we deciding? e.g. "Pizza or sushi?"'
         value={title}
@@ -115,8 +115,13 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
       )}
 
       {mutation.isError && <FieldError>Something went wrong.</FieldError>}
-      <div className="flex gap-2 justify-end">
-        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+      <div className="flex gap-2 justify-between">
+        {onBack && (
+          <Button variant="ghost" onClick={onBack} className="gap-1">
+            <ArrowLeft className="size-4" />
+            Back
+          </Button>
+        )}
         <Button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}>
           {mutation.isPending ? "Creating…" : "Create poll"}
         </Button>
