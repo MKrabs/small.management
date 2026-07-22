@@ -12,6 +12,12 @@ docker start smallmanagement-dev-db >/dev/null 2>&1 || docker run -d \
   -v smallmanagement-dev-db:/var/lib/postgresql/data \
   postgres:16 >/dev/null
 
+until docker exec smallmanagement-dev-db pg_isready -U postgres >/dev/null 2>&1; do sleep 0.3; done
+
+# ponytail: git worktrees don't get their own .venv — point at the main checkout's
+main_root="$(dirname "$(git rev-parse --git-common-dir)")"
+[ -e .venv ] || ln -s "$main_root/.venv" .venv
+
 trap 'kill 0' EXIT INT TERM
 
 (
@@ -22,5 +28,10 @@ trap 'kill 0' EXIT INT TERM
 ) &
 
 (cd frontend && npm run dev) &
+
+for port in 8000 5173; do
+  until (echo > "/dev/tcp/127.0.0.1/$port") >/dev/null 2>&1; do sleep 0.3; done
+done
+echo "ready: http://localhost:5173"
 
 wait
