@@ -91,7 +91,7 @@ export function seedDemo(): DemoStore {
     id: 1, cycle_id: null, kind: "choice", allow_multiple: false,
     title: "Where should we celebrate the season finale?",
     created_by: ALEX, voter_count: choiceVoterCount(choiceOptions),
-    my_vote: null, options: choiceOptions, slots: null,
+    options: choiceOptions, slots: null,
     comment_count: 0, latest_comments: [], created_at: AGO, deleted_at: null, locked_at: null,
   };
 
@@ -111,7 +111,7 @@ export function seedDemo(): DemoStore {
     id: 2, cycle_id: null, kind: "date", allow_multiple: false,
     title: "When works for the weekend getaway?",
     created_by: SAM, voter_count: slotVoterCount(dateSlots),
-    my_vote: null, options: null, slots: dateSlots,
+    options: null, slots: dateSlots,
     comment_count: dateComments.length, latest_comments: dateComments, created_at: AGO, deleted_at: null, locked_at: null,
   };
 
@@ -126,7 +126,7 @@ export function seedDemo(): DemoStore {
     id: 3, cycle_id: null, kind: "range", allow_multiple: false,
     title: "Which week for the cabin trip?",
     created_by: PRIYA, voter_count: slotVoterCount(rangeSlots),
-    my_vote: null, options: null, slots: rangeSlots,
+    options: null, slots: rangeSlots,
     comment_count: 0, latest_comments: [], created_at: AGO, deleted_at: null, locked_at: null,
   };
 

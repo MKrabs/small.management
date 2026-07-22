@@ -71,14 +71,6 @@ class PollKindTests(TestCase):
         ok = self.client.post(slots_url, {"date": "2026-07-10", "date_end": "2026-07-12"}, format="json")
         self.assertEqual(ok.status_code, 201)
 
-    def test_datetime_poll_rejects_choice_votes_and_keeps_tristate(self):
-        poll = self._create(title="When", kind="datetime").json()
-        slots_url = f"{self.base}/polls/{poll['id']}/slots/"
-        ok = self.client.post(slots_url, {"date": "2026-07-10", "status": "maybe", "time_start": "18:00", "time_end": "20:00"}, format="json")
-        self.assertEqual(ok.status_code, 201)
-        no_date = self.client.post(slots_url, {"status": "yes"}, format="json")
-        self.assertEqual(no_date.status_code, 400)
-
     def test_finalize_creates_event(self):
         poll = self._create(title="Trip", kind="range").json()
         missing = self.client.post(f"{self.base}/polls/{poll['id']}/finalize/", {}, format="json")

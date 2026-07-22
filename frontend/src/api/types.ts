@@ -74,7 +74,7 @@ export type Comment = {
   deleted_at: string | null;
 };
 
-export type PollKind = "choice" | "date" | "datetime" | "range";
+export type PollKind = "choice" | "date" | "range";
 
 export type PollOption = {
   id: number;
@@ -94,8 +94,6 @@ export type Poll = {
   title: string;
   created_by: Member | null;
   voter_count: number;
-  /** Requesting member's own participation — date-based kinds only. */
-  my_vote: { voted: boolean; has_date: boolean; has_time: boolean } | null;
   /** Choice polls only. */
   options: PollOption[] | null;
   /** Date/range polls only — everyone's votes, for the feed-card calendar. */

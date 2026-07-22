@@ -41,7 +41,7 @@ Max-width reading width. Centered. Responsive.
 Reverse-chronological. Three card types plus log entries and cycle folds. Poll cards are **interactive** — members vote without leaving the feed.
 
 ### Poll Card (all kinds)
-- Kind label ("Poll" / "Day poll" / "Date range poll" / "Day & time poll") + title
+- Kind label ("Poll" / "Day poll" / "Date range poll") + title
 - Participation count: "4 of 6 voted" · created by · timestamp
 - Latest 3 top-level comments, read-only, with "View all N comments"
 - Tapping title or comments opens the Poll view
@@ -51,7 +51,6 @@ Per kind:
 - **Choice** — vote directly on the card: two big side-by-side buttons with voter avatars beneath (2 options) or bar rows with counts and avatar chips (3+). Anyone can add an option from the card.
 - **Date** — a month calendar on the card: tap toggles a day, drag paints several days. Cells tint by group count.
 - **Range** — the same calendar: drag creates a from–to vote, tap a single-day vote; own ranges listed as pills with endpoint moving and delete.
-- **Date+time** — summary card only (own vote status in the corner); voting happens on the Poll view.
 
 ### Event Card
 - Most visually prominent card
@@ -79,7 +78,7 @@ Per kind:
 ## Sticky Bottom: + Button
 
 Opens a large bottom sheet with actions:
-- New Poll (choice / day / date range / day & time)
+- New Poll (choice / day / date range)
 - New Comment
 - Start New Cycle (available at any time, prominent after an event has passed)
 

@@ -1,6 +1,6 @@
 ---
 type: Product Doc
-description: Voting models per poll kind, heatmap rules, and finishing a vote.
+description: Voting models per poll kind and finishing a vote.
 ---
 
 # Voting
@@ -20,31 +20,7 @@ Selected = available. No maybe/no, no time ranges.
 
 The calendar tints days by how many members cover them and shows the count in the cell.
 
-## Date+Time Polls (tri-state)
-
-The classic availability model. Members express availability at the day level, with optional time range and note. Each vote entry has:
-
-- **Status** — `yes` / `maybe` / `no` (enum, not a number)
-- **Day** — a specific date (required)
-- **Time range** — a start and end time within the day, 30-minute resolution (optional)
-- **Note** — free text (optional)
-
-One day can have multiple entries with different statuses (e.g., `no` before 17h, `maybe` 17h–19h30, `yes` after 20h). The general no-date vote was dropped.
-
-## Heatmap (date+time polls)
-
-The group overview shows raw vote counts per day and time slot. Darker = more people available. No "of X members" framing — the count shown is simply how many voted for that slot.
-
-Day colors in the monthly calendar (slot editor):
-
-| Color | Meaning |
-|---|---|
-| Green | Yes only (all day or with time range) |
-| Orange | Maybe only |
-| Red | No only |
-| Green + Orange | Mix of yes and maybe |
-| Orange + Red | Mix of maybe and no |
-| Green + Orange + Red | All three present |
+(The tri-state date+time poll kind — day-level availability with optional time range, note, and a yes/maybe/no heatmap — was removed. The status axis duplicated what choice polls and event RSVPs already cover, and the time-of-day granularity was never consumed downstream: the organizer still sets the final event time by hand when finalizing a poll.)
 
 ## Retracting a Vote
 

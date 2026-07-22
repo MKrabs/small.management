@@ -1,19 +1,18 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Calendar, CalendarClock, CalendarRange, ListChecks, Plus, X } from "lucide-react";
+import { ArrowLeft, Calendar, CalendarRange, ListChecks, Plus, X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/ui/field";
-import BottomSheet from "@/components/layout/BottomSheet";
 import { cn } from "@/lib/utils";
 import type { Poll, PollKind } from "@/api/types";
 
 type Props = {
   activityId: string;
-  onClose: () => void;
+  onBack?: () => void;
   onCreated: (poll: Poll) => void;
 };
 
@@ -21,10 +20,9 @@ const KINDS: { kind: PollKind; icon: React.ReactNode; label: string; hint: strin
   { kind: "choice", icon: <ListChecks className="size-5" />, label: "Options", hint: "Vote on choices" },
   { kind: "date", icon: <Calendar className="size-5" />, label: "Day", hint: "Pick days that work" },
   { kind: "range", icon: <CalendarRange className="size-5" />, label: "Date range", hint: "Pick from–to spans" },
-  { kind: "datetime", icon: <CalendarClock className="size-5" />, label: "Day & time", hint: "Full availability" },
 ];
 
-export default function CreatePollSheet({ activityId, onClose, onCreated }: Props) {
+export default function CreatePollSheet({ activityId, onBack, onCreated }: Props) {
   const api = useApi();
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<PollKind>("choice");
@@ -49,8 +47,7 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
   });
 
   return (
-    <BottomSheet onClose={onClose} title="New poll">
-      <h2 className="font-semibold text-lg">New poll</h2>
+    <div className="flex flex-col gap-4">
       <Input
         placeholder='What are we deciding? e.g. "Pizza or sushi?"'
         value={title}
@@ -58,7 +55,7 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
         autoFocus
       />
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 [&>button:last-child:nth-child(odd)]:col-span-2">
         {KINDS.map((k) => (
           <button
             key={k.kind}
@@ -116,12 +113,17 @@ export default function CreatePollSheet({ activityId, onClose, onCreated }: Prop
       )}
 
       {mutation.isError && <FieldError>Something went wrong.</FieldError>}
-      <div className="flex gap-2 justify-end">
-        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+      <div className="flex gap-2 justify-between">
+        {onBack && (
+          <Button variant="ghost" onClick={onBack} className="gap-1">
+            <ArrowLeft className="size-4" />
+            Back
+          </Button>
+        )}
         <Button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}>
           {mutation.isPending ? "Creating…" : "Create poll"}
         </Button>
       </div>
-    </BottomSheet>
+    </div>
   );
 }

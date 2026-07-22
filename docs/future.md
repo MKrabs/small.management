@@ -23,8 +23,6 @@ Features explicitly out of scope for v1, noted here so they don't get forgotten.
 
 ## Poll / Voting
 - Enforced poll deadlines (auto-close, restrict voting)
-- "General yes" visualization on heatmap
-- Animations on the slot editor for unresolved submissions (drip/droplet effect for mild-importance nudges)
 
 
 ## Event
@@ -35,5 +33,4 @@ Features explicitly out of scope for v1, noted here so they don't get forgotten.
 - Expanded log granularity settings per activity
 
 ## UI
-- Heatmap visibility toggle (show group heatmap before/after submitting own vote)
 - Dark mode
